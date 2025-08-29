@@ -1,0 +1,165 @@
+# Flutter Project Cursor Rules
+
+## 🛠️ Project Structure
+
+### Folder Organization
+- Maintain clear structure with `/lib/models`, `/lib/screens`, `/lib/services`, `/lib/providers`, `/lib/widgets`
+- Each tab corresponds to a folder under `/screens`
+- Implement sub-pages as separate files within their respective tab folders
+- Place feature-specific widgets in a `widgets.dart` file within the corresponding feature folder
+
+### File Organization
+- Keep related functionality grouped together
+- Use consistent folder naming conventions
+- Avoid deep nesting (max 3-4 levels)
+
+## 🧠 State Management
+
+### Riverpod Implementation
+- Utilize Riverpod for all state management
+- Providers should handle business logic; screens focus on UI presentation
+- For complex state logic, prefer `StateNotifier` or `AsyncNotifier`
+- Keep side effects within services; avoid them in UI components
+
+### Provider Structure
+- Create separate providers for different features
+- Use `ConsumerWidget` or `ConsumerStatefulWidget` for UI components
+- Implement proper error handling in providers
+- Use `ref.watch()` for reactive updates, `ref.read()` for one-time actions
+
+## 🎨 UI / Widgets
+
+### Design System
+- Implement Material 3 with dark theme and orange accents
+- Use consistent color palette throughout the application
+- Maintain proper contrast ratios for accessibility
+
+### Widget Guidelines
+- Extract reusable UI components into the `/widgets` directory
+- Ensure consistent theming and typography across the application
+- Break down large widgets into smaller, manageable components
+- Use `const` constructors when possible for performance
+- Implement proper widget keys for testing and state management
+
+### Layout Principles
+- Use responsive design patterns
+- Implement proper spacing and padding
+- Follow Material Design guidelines for component sizing
+
+### Mobile-First Design
+- Always consider mobile screens first
+- Use MediaQuery or LayoutBuilder to adapt sizing
+- Ensure padding, margins, and font sizes scale well across common phone resolutions
+- Buttons, text fields, and interactive elements must meet mobile tap targets
+- Break large widgets into smaller ones for readability and testability
+- Use Flutter's golden tests or widget tests for visual correctness
+
+## 📦 Dummy / Stub Data
+
+### Data Management
+- Store all stubbed data in `/services/stub_data.dart`
+- Never hardcode data directly within widgets
+- Use data classes and factories to generate test or dummy data
+- Implement proper data models with validation
+
+### Stub Data Structure
+- Create organized, categorized stub data
+- Use realistic but safe test data
+- Implement data generation methods for different scenarios
+
+## 🌐 Networking & Services
+
+### API Architecture
+- Place all API-related code under `/services`
+- Use `http` or `dio` with proper error handling
+- Implement proper HTTP status code handling
+- Use interceptors for authentication and logging
+
+### Service Design
+- Keep services stateless and inject them via providers
+- Implement proper error handling and retry logic
+- Use proper HTTP methods and status codes
+- Implement request/response logging for debugging
+
+## 🧾 Naming Conventions
+
+### File Naming
+- Use `snake_case.dart` for file names
+- Group related files with consistent prefixes
+- Use descriptive names that indicate file purpose
+
+### Code Naming
+- Classes: Use `PascalCase` for class names
+- Variables: Use `camelCase` for variable names
+- Constants: Define constants in `UPPER_CASE`
+- Enums: Name enums using `PascalCase`
+- Private members: Use underscore prefix for private members
+
+### Function Naming
+- Use descriptive, action-oriented names
+- Follow verb-noun pattern for functions
+- Use boolean functions with "is", "has", "can" prefixes
+
+## 📄 Documentation & Testing
+
+### Code Documentation
+- Include docstrings for all models
+- Document all public functions and complex logic
+- Use clear, concise comments for complex business logic
+- Add TODO comments for stubbed or incomplete features
+
+### Testing Requirements
+- Generate basic unit tests for core models and providers
+- Test business logic thoroughly
+- Implement widget tests for UI components
+- Use proper mocking strategies for dependencies
+
+## 🔍 Code Quality & Best Practices
+
+### Code Review Standards
+- Regularly review code for readability, performance, and adherence to guidelines
+- Follow the DRY (Don't Repeat Yourself) principle
+- Apply SOLID principles for scalable and maintainable code
+- Prioritize readability and simplicity over premature optimization
+
+### Programming Patterns
+- Prioritize functional and declarative programming patterns
+- Avoid using classes when functions would suffice
+- Use immutable data structures when possible
+- Implement proper error handling with Result types or exceptions
+
+### Code Organization
+- Use explicit, descriptive variable names
+- Emphasize modularization to follow DRY principles
+- Minimize code duplication through proper abstraction
+- Leave no TODO comments or placeholders in production code
+
+### Performance Considerations
+- Use `const` constructors where appropriate
+- Implement proper list view optimization
+- Use proper state management patterns
+- Avoid unnecessary rebuilds in widgets
+
+## 🚫 Anti-Patterns to Avoid
+
+- Don't hardcode values in widgets
+- Don't mix business logic with UI code
+- Don't create overly complex widgets
+- Don't ignore error handling
+- Don't use global state management
+- Don't create circular dependencies
+- Don't ignore accessibility requirements
+
+## ✅ Quality Checklist
+
+Before committing code, ensure:
+- [ ] Code follows naming conventions
+- [ ] No hardcoded data in widgets
+- [ ] Proper error handling implemented
+- [ ] Tests written for new functionality
+- [ ] Documentation updated
+- [ ] No TODO comments left
+- [ ] Code is properly modularized
+- [ ] Performance considerations addressed
+- [ ] Accessibility requirements met
+- [ ] Code review completed
