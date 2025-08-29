@@ -6,3 +6,4 @@ export 'clan.dart';
 export 'item.dart';
 export 'world.dart';
 export 'chat_message.dart';
+export 'game_update.dart';

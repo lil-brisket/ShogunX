@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/models.dart';
 
 class GameService {
@@ -10,11 +11,82 @@ class GameService {
   final Map<String, List<Mission>> _missionsByVillage = {};
   final Map<String, List<Clan>> _clansByVillage = {};
   final List<ChatMessage> _chatMessages = [];
+  final List<GameUpdate> _gameUpdates = [];
 
   // Character Management
   Future<Character?> getCharacter(String characterId) async {
     await Future.delayed(const Duration(milliseconds: 100));
+    
+    // If character doesn't exist, create a demo character
+    if (!_characters.containsKey(characterId)) {
+      _characters[characterId] = _createDemoCharacter(characterId);
+    }
+    
     return _characters[characterId];
+  }
+
+  Character _createDemoCharacter(String characterId) {
+    return Character(
+      id: characterId,
+      userId: 'demo_user_1',
+      name: 'ShadowNinja',
+      village: 'Konoha',
+      clanId: 'konoha_elite',
+      clanRank: 'Member',
+      ninjaRank: 'Chunin',
+      elements: ['Fire', 'Lightning'],
+      bloodline: 'Sharingan',
+      
+      // Core Stats
+      strength: 15000,
+      intelligence: 12000,
+      speed: 18000,
+      defense: 13000,
+      willpower: 14000,
+      
+      // Combat Stats
+      bukijutsu: 25000,
+      ninjutsu: 30000,
+      taijutsu: 20000,
+      bloodlineEfficiency: 5000,
+      
+      // Jutsu Mastery
+      jutsuMastery: {
+        'fireball_jutsu': 8,
+        'lightning_blade': 6,
+        'sharingan_genjutsu': 4,
+      },
+      
+      // Current Status
+      currentHp: 420000,
+      currentChakra: 520000,
+      currentStamina: 640000,
+      experience: 45000,
+      level: 25,
+      
+      // Resources
+      ryoOnHand: 15000,
+      ryoBanked: 50000,
+      
+      // Reputation
+      villageLoyalty: 750,
+      outlawInfamy: -200,
+      
+      // Relationships
+      marriedTo: 'KunoichiMaster',
+      senseiId: 'jounin_sensei_123',
+      studentIds: ['genin_student_1', 'genin_student_2'],
+      
+      // Records
+      pvpWins: 23,
+      pvpLosses: 7,
+      pveWins: 156,
+      pveLosses: 12,
+      
+      // Settings
+      avatarUrl: null,
+      gender: 'male',
+    );
   }
 
   Future<List<Character>> getUserCharacters(String userId) async {
@@ -368,5 +440,166 @@ class GameService {
       activePlayers: <String>[],
       lastUpdated: DateTime.now(),
     );
+  }
+
+  // Game Updates Management
+  Future<List<GameUpdate>> getGameUpdates() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    if (_gameUpdates.isEmpty) {
+      _initializeGameUpdates();
+    }
+    
+    // Filter out expired updates
+    return _gameUpdates.where((update) => update.shouldShow).toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  }
+
+  Future<void> addGameUpdate(GameUpdate update) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+    _gameUpdates.add(update);
+  }
+
+  Future<void> removeGameUpdate(String updateId) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+    _gameUpdates.removeWhere((update) => update.id == updateId);
+  }
+
+  Future<void> updateGameUpdate(GameUpdate updatedUpdate) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+    final index = _gameUpdates.indexWhere((update) => update.id == updatedUpdate.id);
+    if (index != -1) {
+      _gameUpdates[index] = updatedUpdate;
+    }
+  }
+
+  void _initializeGameUpdates() {
+    _gameUpdates.addAll([
+      GameUpdate(
+        id: 'update_1',
+        title: 'New Mission System',
+        description: 'The mission system has been updated with new D-S rank missions available for all villages.',
+        type: UpdateType.feature,
+        priority: UpdatePriority.high,
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        version: '1.2.0',
+        tags: ['missions', 'gameplay'],
+        icon: Icons.assignment,
+        color: Colors.blue,
+      ),
+      GameUpdate(
+        id: 'update_2',
+        title: 'Clan Features Enhanced',
+        description: 'Join clans and participate in exclusive Dark Ops missions. New leadership roles and bonuses added.',
+        type: UpdateType.feature,
+        priority: UpdatePriority.high,
+        timestamp: DateTime.now().subtract(const Duration(hours: 6)),
+        version: '1.2.0',
+        tags: ['clans', 'social'],
+        icon: Icons.group,
+        color: Colors.purple,
+      ),
+      GameUpdate(
+        id: 'update_3',
+        title: 'World Map Expansion',
+        description: 'Explore the enhanced 25x25 grid world map with new locations, PvP zones, and resource gathering areas.',
+        type: UpdateType.content,
+        priority: UpdatePriority.normal,
+        timestamp: DateTime.now().subtract(const Duration(hours: 12)),
+        version: '1.1.5',
+        tags: ['world', 'exploration'],
+        icon: Icons.map,
+        color: Colors.green,
+      ),
+      GameUpdate(
+        id: 'update_4',
+        title: 'Combat System Improvements',
+        description: 'Turn-based combat with refined AP system, jutsu loadouts, and elemental effectiveness balancing.',
+        type: UpdateType.balance,
+        priority: UpdatePriority.normal,
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        version: '1.1.3',
+        tags: ['combat', 'balance'],
+        icon: Icons.sports_kabaddi,
+        color: Colors.red,
+      ),
+      GameUpdate(
+        id: 'update_5',
+        title: 'Hospital System Active',
+        description: 'New healing system with self-heal timers, Ryo healing, and Medic healing using CP/STA.',
+        type: UpdateType.feature,
+        priority: UpdatePriority.normal,
+        timestamp: DateTime.now().subtract(const Duration(days: 2)),
+        version: '1.1.0',
+        tags: ['hospital', 'healing'],
+        icon: Icons.local_hospital,
+        color: Colors.orange,
+      ),
+    ]);
+  }
+
+  // Helper method to add project milestone updates
+  Future<void> addProjectUpdate({
+    required String title,
+    required String description,
+    UpdateType type = UpdateType.feature,
+    UpdatePriority priority = UpdatePriority.normal,
+    String? version,
+    List<String> tags = const [],
+    IconData? icon,
+    Color? color,
+  }) async {
+    final update = GameUpdate(
+      id: 'update_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      description: description,
+      type: type,
+      priority: priority,
+      timestamp: DateTime.now(),
+      version: version,
+      tags: tags,
+      icon: icon ?? _getDefaultIconForType(type),
+      color: color ?? _getDefaultColorForType(type),
+    );
+    
+    await addGameUpdate(update);
+  }
+
+  IconData _getDefaultIconForType(UpdateType type) {
+    switch (type) {
+      case UpdateType.feature:
+        return Icons.new_releases;
+      case UpdateType.bugfix:
+        return Icons.bug_report;
+      case UpdateType.balance:
+        return Icons.balance;
+      case UpdateType.content:
+        return Icons.library_add;
+      case UpdateType.event:
+        return Icons.event;
+      case UpdateType.maintenance:
+        return Icons.build;
+      case UpdateType.security:
+        return Icons.security;
+    }
+  }
+
+  Color _getDefaultColorForType(UpdateType type) {
+    switch (type) {
+      case UpdateType.feature:
+        return Colors.blue;
+      case UpdateType.bugfix:
+        return Colors.orange;
+      case UpdateType.balance:
+        return Colors.purple;
+      case UpdateType.content:
+        return Colors.green;
+      case UpdateType.event:
+        return Colors.amber;
+      case UpdateType.maintenance:
+        return Colors.grey;
+      case UpdateType.security:
+        return Colors.red;
+    }
   }
 }

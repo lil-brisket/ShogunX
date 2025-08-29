@@ -6,6 +6,7 @@ import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/profile/settings_screen.dart';
 import 'services/theme_service.dart';
 
 void main() {
@@ -39,6 +40,10 @@ class NinjaWorldMMOApp extends ConsumerWidget {
         GoRoute(
           path: '/main',
           builder: (context, state) => const MainScreen(),
+        ),
+        GoRoute(
+          path: '/profile/settings',
+          builder: (context, state) => const SettingsScreen(),
         ),
       ],
       redirect: (context, state) {

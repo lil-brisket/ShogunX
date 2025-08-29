@@ -11,6 +11,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).user;
     final chatMessagesAsync = ref.watch(chatMessagesProvider);
+    final gameUpdatesAsync = ref.watch(gameUpdatesNotifierProvider);
     
     return Scaffold(
       backgroundColor: const Color(0xFF0f3460),
@@ -125,37 +126,68 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         
                         Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                              _buildUpdateCard(
-                                'New Mission System',
-                                'The mission system has been updated with new D-S rank missions available.',
-                                Icons.assignment,
-                                Colors.blue,
+                          child: gameUpdatesAsync.when(
+                            data: (updates) {
+                              if (updates.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'No updates available',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }
+                              
+                              return ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: updates.length,
+                                itemBuilder: (context, index) {
+                                  final update = updates[index];
+                                  return Column(
+                                    children: [
+                                      _buildUpdateCard(
+                                        update.title,
+                                        update.description,
+                                        update.icon,
+                                        update.color,
+                                        timestamp: update.timestamp,
+                                        version: update.version,
+                                        priority: update.priority,
+                                        type: update.type,
+                                      ),
+                                      if (index < updates.length - 1)
+                                        const SizedBox(height: 12),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.deepOrange,
                               ),
-                              const SizedBox(height: 12),
-                              _buildUpdateCard(
-                                'Clan Features',
-                                'Join clans and participate in exclusive Dark Ops missions.',
-                                Icons.group,
-                                Colors.purple,
+                            ),
+                            error: (error, stack) => Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Error loading updates: $error',
+                                    style: const TextStyle(color: Colors.red),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      ref.read(gameUpdatesNotifierProvider.notifier).refresh();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepOrange,
+                                    ),
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 12),
-                              _buildUpdateCard(
-                                'World Map',
-                                'Explore the 25x25 grid world map with new locations.',
-                                Icons.map,
-                                Colors.green,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildUpdateCard(
-                                'Combat System',
-                                'Turn-based combat with AP system and jutsu loadouts.',
-                                Icons.sports_kabaddi,
-                                Colors.red,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
@@ -314,54 +346,159 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUpdateCard(String title, String description, IconData icon, Color color) {
+  Widget _buildUpdateCard(
+    String title, 
+    String description, 
+    IconData icon, 
+    Color color, {
+    DateTime? timestamp,
+    String? version,
+    UpdatePriority? priority,
+    UpdateType? type,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color == Colors.amber
-            ? Colors.amber.withValues(alpha: 0.2)
-            : color == Colors.deepOrange
-                ? Colors.deepOrange.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.3),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color == Colors.amber
-              ? Colors.amber.withValues(alpha: 0.5)
-              : color == Colors.deepOrange
-                  ? Colors.deepOrange.withValues(alpha: 0.5)
-                  : color.withValues(alpha: 0.5),
+          color: color.withValues(alpha: 0.5),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+          Row(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        if (version != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              version,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (type != null || priority != null)
+                      Row(
+                        children: [
+                          if (type != null)
+                            Container(
+                              margin: const EdgeInsets.only(right: 8, top: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                type.name.toUpperCase(),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          if (priority != null && priority != UpdatePriority.normal)
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getPriorityColor(priority).withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                priority.name.toUpperCase(),
+                                style: TextStyle(
+                                  color: _getPriorityColor(priority),
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 12,
             ),
           ),
+          if (timestamp != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    _formatTime(timestamp),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  Color _getPriorityColor(UpdatePriority priority) {
+    switch (priority) {
+      case UpdatePriority.low:
+        return Colors.grey;
+      case UpdatePriority.normal:
+        return Colors.blue;
+      case UpdatePriority.high:
+        return Colors.orange;
+      case UpdatePriority.critical:
+        return Colors.red;
+    }
   }
 
   Widget _buildChatMessage(ChatMessage message) {

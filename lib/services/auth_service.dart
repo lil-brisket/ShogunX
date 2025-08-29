@@ -18,8 +18,13 @@ class AuthService {
     
     // Stub authentication logic
     if (username.isNotEmpty && password.isNotEmpty) {
+      final userId = 'user_${username.hashCode}';
+      
+      // Create a demo character for existing users
+      final characterId = 'char_${userId}_demo';
+      
       _currentUser = User(
-        id: 'user_${username.hashCode}',
+        id: userId,
         username: username,
         email: '$username@example.com',
         isActive: true,
@@ -35,8 +40,8 @@ class AuthService {
         friends: [],
         blockedUsers: [],
         ignoredUsers: [],
-        currentCharacterId: null,
-        characterIds: [],
+        currentCharacterId: characterId,
+        characterIds: [characterId],
         lastVillage: 'Konoha',
         lastActivity: DateTime.now(),
         createdAt: DateTime.now(),

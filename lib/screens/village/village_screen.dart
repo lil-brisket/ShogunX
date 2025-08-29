@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../models/models.dart';
+import '../../services/banking_service.dart';
+import '../profile/transfer_dialog.dart';
 
 
 class VillageScreen extends ConsumerStatefulWidget {
@@ -265,71 +267,137 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
   }
 
   Widget _buildBankTab() {
+    final user = ref.watch(authStateProvider).user;
     
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Balance Cards
-          Row(
+    if (user?.currentCharacterId == null) {
+      return const Center(
+        child: Text(
+          'No character selected',
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      );
+    }
+
+    final characterAsync = ref.watch(characterProvider(user!.currentCharacterId!));
+    
+    return characterAsync.when(
+      data: (character) {
+        if (character == null) {
+          return const Center(
+            child: Text(
+              'Character not found',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              Expanded(
-                child: _buildBalanceCard(
-                  'On Hand',
-                                          '0', // TODO: Get from character data
-                  Icons.account_balance_wallet,
-                  Colors.green,
+              // Balance Cards
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildBalanceCard(
+                      'On Hand',
+                      _formatNumber(character.ryoOnHand),
+                      Icons.account_balance_wallet,
+                      Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildBalanceCard(
+                      'In Bank',
+                      _formatNumber(character.ryoBanked),
+                      Icons.account_balance,
+                      Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Total Wealth
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16213e),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.deepOrange.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.savings, color: Colors.deepOrange, size: 24),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Total Wealth',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_formatNumber(character.ryoOnHand + character.ryoBanked)} Ryo',
+                      style: const TextStyle(
+                        color: Colors.deepOrange,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildBalanceCard(
-                  'In Bank',
-                                          '0', // TODO: Get from character data
-                  Icons.account_balance,
-                  Colors.blue,
-                ),
+              
+              const SizedBox(height: 32),
+              
+              // Bank Actions
+              _buildBankAction(
+                'Deposit Ryo',
+                'Move money from hand to bank',
+                Icons.arrow_downward,
+                Colors.green,
+                () => _showDepositDialog(character),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildBankAction(
+                'Withdraw Ryo',
+                'Move money from bank to hand',
+                Icons.arrow_upward,
+                Colors.orange,
+                () => _showWithdrawDialog(character),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildBankAction(
+                'Transfer to Player',
+                'Send money to another player',
+                Icons.swap_horiz,
+                Colors.purple,
+                () => _showTransferDialog(character),
               ),
             ],
           ),
-          
-          const SizedBox(height: 32),
-          
-          // Bank Actions
-          _buildBankAction(
-            'Deposit Ryo',
-            'Move money from hand to bank',
-            Icons.arrow_downward,
-            Colors.green,
-            () {
-              // TODO: Implement deposit
-            },
-          ),
-          
-          const SizedBox(height: 16),
-          
-          _buildBankAction(
-            'Withdraw Ryo',
-            'Move money from bank to hand',
-            Icons.arrow_upward,
-            Colors.orange,
-            () {
-              // TODO: Implement withdraw
-            },
-          ),
-          
-          const SizedBox(height: 16),
-          
-          _buildBankAction(
-            'Transfer to Player',
-            'Send money to another player',
-            Icons.swap_horiz,
-            Colors.purple,
-            () {
-              // TODO: Implement transfer
-            },
-          ),
-        ],
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: Colors.deepOrange),
+      ),
+      error: (error, _) => Center(
+        child: Text(
+          'Error loading character: $error',
+          style: const TextStyle(color: Colors.red),
+        ),
       ),
     );
   }
@@ -772,5 +840,124 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
       case MissionRank.D:
         return Colors.grey;
     }
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match match) => '${match[1]},',
+    );
+  }
+
+  void _showDepositDialog(Character character) {
+    _showAmountDialog(
+      'Deposit Ryo',
+      'Enter amount to deposit to bank',
+      character.ryoOnHand,
+      (amount) async {
+        final bankingNotifier = ref.read(bankingNotifierProvider(character.id).notifier);
+        final result = await bankingNotifier.deposit(amount);
+        if (mounted) {
+          _showResultSnackbar(result);
+        }
+      },
+    );
+  }
+
+  void _showWithdrawDialog(Character character) {
+    _showAmountDialog(
+      'Withdraw Ryo',
+      'Enter amount to withdraw from bank',
+      character.ryoBanked,
+      (amount) async {
+        final bankingNotifier = ref.read(bankingNotifierProvider(character.id).notifier);
+        final result = await bankingNotifier.withdraw(amount);
+        if (mounted) {
+          _showResultSnackbar(result);
+        }
+      },
+    );
+  }
+
+  void _showTransferDialog(Character character) {
+    showDialog(
+      context: context,
+      builder: (context) => TransferDialog(character: character),
+    );
+  }
+
+  void _showAmountDialog(String title, String subtitle, int maxAmount, Function(int) onConfirm) {
+    final controller = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Available: ${_formatNumber(maxAmount)} Ryo',
+              style: const TextStyle(color: Colors.green, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Enter amount...',
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              final amount = int.tryParse(controller.text) ?? 0;
+              if (amount > 0 && amount <= maxAmount) {
+                Navigator.of(context).pop();
+                onConfirm(amount);
+              }
+            },
+            child: const Text('Confirm', style: TextStyle(color: Colors.deepOrange)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResultSnackbar(BankingResult result) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.message),
+        backgroundColor: result.success ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 }
