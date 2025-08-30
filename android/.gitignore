@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Eclipse project files (should not be committed)
+.project
+.classpath
+.settings/

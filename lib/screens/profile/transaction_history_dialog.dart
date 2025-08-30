@@ -278,7 +278,7 @@ class TransactionHistoryDialog extends ConsumerWidget {
         return Colors.purple;
       case TransactionType.fee:
         return Colors.orange;
-      case TransactionType.mission_reward:
+      case TransactionType.missionReward:
         return Colors.amber;
       case TransactionType.purchase:
         return Colors.red;
@@ -295,7 +295,7 @@ class TransactionHistoryDialog extends ConsumerWidget {
         return Icons.send;
       case TransactionType.fee:
         return Icons.payment;
-      case TransactionType.mission_reward:
+      case TransactionType.missionReward:
         return Icons.card_giftcard;
       case TransactionType.purchase:
         return Icons.shopping_cart;
@@ -312,7 +312,7 @@ class TransactionHistoryDialog extends ConsumerWidget {
         return 'Player Transfer';
       case TransactionType.fee:
         return 'Service Fee';
-      case TransactionType.mission_reward:
+      case TransactionType.missionReward:
         return 'Mission Reward';
       case TransactionType.purchase:
         return 'Purchase';

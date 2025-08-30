@@ -116,13 +116,16 @@ class AuthService {
       bukijutsu: 1000,
       ninjutsu: 1000,
       taijutsu: 1000,
-      bloodlineEfficiency: 0,
+      genjutsu: 0,
       jutsuMastery: {},
       currentHp: 40000, // maxHp = (1000*2 + 1000) * 10 = 30000, but we'll set it higher for starting
       currentChakra: 30000, // maxChakra = (1000*2 + 1000) * 10 = 30000
       currentStamina: 30000, // maxStamina = (1000*2 + 1000) * 10 = 30000
       experience: 0,
       level: 1,
+      hpRegenRate: 100,
+      cpRegenRate: 100,
+      spRegenRate: 100,
       ryoOnHand: 1000,
       ryoBanked: 0,
       villageLoyalty: 100,
@@ -134,6 +137,7 @@ class AuthService {
       pvpLosses: 0,
       pveWins: 0,
       pveLosses: 0,
+      medicalExp: 0,
       avatarUrl: null,
       gender: 'Unknown',
     );
@@ -168,5 +172,25 @@ class AuthService {
       'Kumo',
       'Iwa',
     ];
+  }
+
+  Future<List<Character>> getUserCharacters() async {
+    if (_currentUser == null) return [];
+    
+    try {
+      final gameService = GameService();
+      final characters = <Character>[];
+      
+      for (final characterId in _currentUser!.characterIds) {
+        final character = await gameService.getCharacter(characterId);
+        if (character != null) {
+          characters.add(character);
+        }
+      }
+      
+      return characters;
+    } catch (e) {
+      return [];
+    }
   }
 }

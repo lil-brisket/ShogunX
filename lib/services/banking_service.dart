@@ -6,7 +6,7 @@ enum TransactionType {
   withdraw,
   transfer,
   fee,
-  mission_reward,
+  missionReward,
   purchase
 }
 
@@ -80,8 +80,8 @@ class BankingService {
   final GameService _gameService = GameService();
   final List<BankTransaction> _transactions = [];
 
-  static const int TRANSFER_FEE = 0; // No transfer fee
-  static const int MIN_TRANSFER_AMOUNT = 100; // Minimum transfer amount
+  static const int transferFee = 0; // No transfer fee
+  static const int minTransferAmount = 100; // Minimum transfer amount
 
   // Deposit ryo from hand to bank
   Future<BankingResult> depositRyo(String characterId, int amount) async {
@@ -194,10 +194,10 @@ class BankingService {
     int amount, {
     String? message,
   }) async {
-    if (amount < MIN_TRANSFER_AMOUNT) {
+    if (amount < minTransferAmount) {
       return BankingResult(
         success: false,
-        message: 'Minimum transfer amount is $MIN_TRANSFER_AMOUNT ryo',
+        message: 'Minimum transfer amount is $minTransferAmount ryo',
       );
     }
 
@@ -350,13 +350,16 @@ class BankingService {
         bukijutsu: 15000,
         ninjutsu: 20000,
         taijutsu: 18000,
-        bloodlineEfficiency: 2000,
+        genjutsu: 2000,
         jutsuMastery: {},
         currentHp: 200000,
         currentChakra: 150000,
         currentStamina: 180000,
         experience: 25000,
         level: 20,
+        hpRegenRate: 100,
+        cpRegenRate: 100,
+        spRegenRate: 100,
         ryoOnHand: 5000,
         ryoBanked: 15000,
         villageLoyalty: 500,
@@ -366,6 +369,7 @@ class BankingService {
         pvpLosses: 3,
         pveWins: 45,
         pveLosses: 5,
+        medicalExp: 0,
         gender: 'male',
       ),
       Character(
@@ -383,13 +387,16 @@ class BankingService {
         bukijutsu: 12000,
         ninjutsu: 18000,
         taijutsu: 14000,
-        bloodlineEfficiency: 1000,
+        genjutsu: 1000,
         jutsuMastery: {},
         currentHp: 180000,
         currentChakra: 210000,
         currentStamina: 190000,
         experience: 18000,
         level: 15,
+        hpRegenRate: 100,
+        cpRegenRate: 100,
+        spRegenRate: 100,
         ryoOnHand: 3000,
         ryoBanked: 8000,
         villageLoyalty: 300,
@@ -399,6 +406,7 @@ class BankingService {
         pvpLosses: 4,
         pveWins: 25,
         pveLosses: 3,
+        medicalExp: 0,
         gender: 'female',
       ),
     ];
@@ -428,7 +436,7 @@ class BankingService {
         return '💸';
       case TransactionType.fee:
         return '💳';
-      case TransactionType.mission_reward:
+      case TransactionType.missionReward:
         return '🎁';
       case TransactionType.purchase:
         return '🛒';

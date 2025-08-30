@@ -36,7 +36,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
   @override
   Widget build(BuildContext context) {
     final maxTransfer = widget.character.ryoOnHand;
-    final canTransfer = maxTransfer >= BankingService.MIN_TRANSFER_AMOUNT;
+    final canTransfer = maxTransfer >= BankingService.minTransferAmount;
 
     return Dialog(
       backgroundColor: const Color(0xFF16213e),
@@ -102,7 +102,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                     style: const TextStyle(color: Colors.green, fontSize: 12),
                   ),
                   Text(
-                    'Minimum transfer: ${BankingService.MIN_TRANSFER_AMOUNT} Ryo',
+                    'Minimum transfer: ${BankingService.minTransferAmount} Ryo',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
@@ -395,7 +395,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             decoration: InputDecoration(
               labelText: 'Amount (Ryo)',
               labelStyle: const TextStyle(color: Colors.white70),
-              hintText: 'Min: ${BankingService.MIN_TRANSFER_AMOUNT}, Max: ${_formatNumber(maxTransfer)}',
+                                  hintText: 'Min: ${BankingService.minTransferAmount}, Max: ${_formatNumber(maxTransfer)}',
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
               prefixIcon: const Icon(Icons.monetization_on, color: Colors.amber),
               border: OutlineInputBorder(
@@ -495,8 +495,8 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
       return;
     }
 
-    if (amount < BankingService.MIN_TRANSFER_AMOUNT) {
-      _showSnackbar('Minimum transfer is ${BankingService.MIN_TRANSFER_AMOUNT} Ryo', Colors.red);
+    if (amount < BankingService.minTransferAmount) {
+      _showSnackbar('Minimum transfer is ${BankingService.minTransferAmount} Ryo', Colors.red);
       return;
     }
 

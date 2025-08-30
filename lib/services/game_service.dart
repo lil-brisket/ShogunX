@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import 'hospital_service.dart';
 
 class GameService {
   static final GameService _instance = GameService._internal();
@@ -48,7 +49,7 @@ class GameService {
       bukijutsu: 25000,
       ninjutsu: 30000,
       taijutsu: 20000,
-      bloodlineEfficiency: 5000,
+      genjutsu: 5000,
       
       // Jutsu Mastery
       jutsuMastery: {
@@ -63,6 +64,11 @@ class GameService {
       currentStamina: 640000,
       experience: 45000,
       level: 25,
+      
+      // Regeneration Rates (per 30 seconds)
+      hpRegenRate: 100,
+      cpRegenRate: 100,
+      spRegenRate: 100,
       
       // Resources
       ryoOnHand: 15000,
@@ -83,6 +89,9 @@ class GameService {
       pveWins: 156,
       pveLosses: 12,
       
+      // Medical System
+      medicalExp: 5000,
+      
       // Settings
       avatarUrl: null,
       gender: 'male',
@@ -97,12 +106,29 @@ class GameService {
   Future<void> saveCharacter(Character character) async {
     await Future.delayed(const Duration(milliseconds: 150));
     _characters[character.id] = character;
+    
+    // Check if character should be admitted to hospital
+    if (character.currentHp <= 0) {
+      final hospitalService = HospitalService();
+      await hospitalService.admitPatient(character);
+    }
   }
 
   Future<Character> createCharacter(Character character) async {
     await Future.delayed(const Duration(milliseconds: 300));
     _characters[character.id] = character;
     return character;
+  }
+
+  // Delete a character
+  Future<bool> deleteCharacter(String characterId) async {
+    try {
+      // In a real implementation, this would delete from the database
+      // For now, we'll just return success
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   // Mission Management

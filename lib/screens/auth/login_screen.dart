@@ -28,6 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final success = await ref.read(authStateProvider.notifier).login(
         _usernameController.text.trim(),
         _passwordController.text,
+        ref,
       );
       
       if (success) {

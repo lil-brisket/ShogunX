@@ -7,7 +7,7 @@ A text-based MMORPG inspired by a feudal ninja world. Built with Flutter and Riv
 ### 🎮 Core Game Systems
 
 - **5 Core Stats**: Strength, Intelligence, Speed, Defense, Willpower (max 250k)
-- **4 Combat Stats**: Bukijutsu, Ninjutsu, Taijutsu, Bloodline Efficiency (max 500k, except BE at 50k)
+- **4 Combat Stats**: Bukijutsu, Ninjutsu, Taijutsu, Genjutsu
 - **Resource Stats**: Health (HP), Chakra (CP), Stamina (STA) – scale with level
 - **Ninja Rank Progression**: Academy Student → Genin → Chunin → Jounin → Elite Jounin → Kage
 - **Turn-based AP Combat**: 100 AP per turn, Speed determines initiative
@@ -120,7 +120,7 @@ lib/
 
 ### 👤 Character System
 - **Core Stats**: Strength, Intelligence, Speed, Defense, Willpower
-- **Combat Stats**: Bukijutsu, Ninjutsu, Taijutsu, Bloodline Efficiency
+- **Combat Stats**: Bukijutsu, Ninjutsu, Taijutsu, Genjutsu
 - **Resources**: HP, Chakra, Stamina with dynamic scaling
 - **Progression**: Level-based advancement with rank requirements
 - **Relationships**: Sensei/Student, Marriage, Clan membership

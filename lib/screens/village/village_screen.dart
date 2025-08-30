@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../models/models.dart';
 import '../../services/banking_service.dart';
+import '../../services/training_service.dart';
 import '../profile/transfer_dialog.dart';
+import 'hospital_screen.dart';
 
 
 class VillageScreen extends ConsumerStatefulWidget {
@@ -15,6 +18,7 @@ class VillageScreen extends ConsumerStatefulWidget {
 
 class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _trainingTimer;
 
   @override
   void initState() {
@@ -23,11 +27,19 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     _tabController.addListener(() {
       ref.read(selectedVillageTabProvider.notifier).state = _tabController.index;
     });
+    
+    // Start timer to refresh training sessions every second
+    _trainingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {}); // Trigger rebuild to update training progress
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _trainingTimer?.cancel();
     super.dispose();
   }
 
@@ -150,8 +162,8 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
         itemCount: missions.length,
         itemBuilder: (context, index) {
           final mission = missions[index];
-          // Note: We need character data to check if mission can be taken
-          final canTake = false; // TODO: Implement with character data
+          final currentCharacter = ref.watch(gameStateProvider).selectedCharacter;
+          final canTake = currentCharacter != null && currentCharacter.level >= mission.requiredLevel;
           
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -231,7 +243,13 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
               trailing: canTake
                   ? ElevatedButton(
                       onPressed: () {
-                        // TODO: Implement take mission
+                        // TODO: Implement take mission - for now just show a message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Mission "${mission.title}" taken!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange,
@@ -562,101 +580,778 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
   }
 
   Widget _buildHospitalTab() {
-    // Note: HP is now character-specific, not user-specific
-    final isDead = false; // TODO: Implement with character data
+    return const HospitalScreen();
+  }
+
+  Widget _buildTrainingTab() {
+    final user = ref.watch(authStateProvider).user;
+    if (user == null) return _buildNoUserMessage();
     
-    return Padding(
+    final currentCharacter = ref.watch(gameStateProvider).selectedCharacter;
+    if (currentCharacter == null) return _buildNoCharacterMessage();
+    
+    final activeSessions = ref.watch(activeTrainingSessionsProvider);
+    final characterSessions = activeSessions.where((s) => s.characterId == currentCharacter.id).toList();
+    final hasActiveSessions = characterSessions.isNotEmpty;
+    
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDead ? Colors.red.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDead ? Colors.red : Colors.green,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  isDead ? Icons.healing : Icons.favorite,
-                  color: isDead ? Colors.red : Colors.green,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isDead ? 'You are unconscious!' : 'You are healthy',
-                  style: TextStyle(
-                    color: isDead ? Colors.red : Colors.green,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isDead ? 'Your HP has reached 0' : 'Your HP is above 0',
-                  style: TextStyle(
-                    color: isDead ? Colors.red.withValues(alpha: 0.8) : Colors.green.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          if (isDead) ...[
-            const SizedBox(height: 32),
-            
-            _buildHospitalAction(
-              'Wait to Heal (2 min)',
-              'Free healing over time',
-              Icons.timer,
-              Colors.blue,
-              () {
-                // TODO: Implement wait to heal
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildHospitalAction(
-              'Pay to Heal (100 Ryo)',
-              'Instant healing for a price',
-              Icons.payment,
-              Colors.green,
-              () {
-                // TODO: Implement pay to heal
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildHospitalAction(
-              'Get Healed by Player',
-              'Request healing from others',
-              Icons.people,
-              Colors.purple,
-              () {
-                // TODO: Implement player healing
-              },
-            ),
+          // Active Training Sessions
+          if (hasActiveSessions) ...[
+            _buildActiveTrainingSessionsSection(characterSessions),
+            const SizedBox(height: 20),
           ],
+          
+          // Available Training Options
+          _buildAvailableTrainingOptions(currentCharacter, hasActiveSessions),
         ],
       ),
     );
   }
 
-  Widget _buildTrainingTab() {
-    return const Center(
-      child: Text(
-        'Training Arena coming soon!',
-        style: TextStyle(color: Colors.white, fontSize: 18),
+  Widget _buildActiveTrainingSessionsSection(List<TrainingSession> characterSessions) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.deepOrange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.deepOrange.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.play_circle,
+                color: Colors.deepOrange,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Active Training Sessions',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...characterSessions.map((session) => _buildActiveTrainingCard(session)),
+      ],
+    );
+  }
+
+  Widget _buildAvailableTrainingOptions(Character character, bool hasActiveSessions) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.green.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.green.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.fitness_center,
+                color: Colors.green,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Available Training Options',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Core Stats Grid
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.blue.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Text(
+            'Core Stats',
+            style: TextStyle(
+              color: Colors.blue,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2.5,
+          children: [
+            'strength',
+            'intelligence',
+            'speed',
+            'defense',
+            'willpower',
+          ].map((statType) => _buildStatTrainingCard(statType, character, hasActiveSessions)).toList(),
+        ),
+        
+        const SizedBox(height: 20),
+        
+        // Combat Stats Grid
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.purple.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.purple.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Text(
+            'Combat Stats',
+            style: TextStyle(
+              color: Colors.purple,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2.5,
+          children: [
+            'bukijutsu',
+            'ninjutsu',
+            'taijutsu',
+            'genjutsu',
+          ].map((statType) => _buildStatTrainingCard(statType, character, hasActiveSessions)).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrainingSystemInfo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e).withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.deepOrange,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Training System Info',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '• Each training session lasts up to 8 hours\n'
+            '• XP gain is capped to prevent exceeding max stat\n'
+            '• Early collection does not penalize XP gain\n'
+            '• Idle-friendly: you can log off and still gain XP\n'
+            '• Only one stat can be trained at a time\n'
+            '• Base rate: ${TrainingSession.baseRate.toStringAsFixed(2)} XP per second',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _buildNoUserMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Please log in to access training.',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed('/login');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Go to Login'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoCharacterMessage() {
+    final user = ref.watch(authStateProvider).user;
+    if (user == null) return _buildNoUserMessage();
+
+    final userCharacters = ref.watch(authStateProvider.notifier).getUserCharacters(ref);
+    if (userCharacters.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'No characters found for this user. Please create one.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                // Create a default character
+                final defaultCharacter = Character(
+                  id: 'char_${user.id}_${DateTime.now().millisecondsSinceEpoch}',
+                  userId: user.id,
+                  name: '${user.username}_${DateTime.now().millisecondsSinceEpoch % 1000}',
+                  village: user.lastVillage ?? 'Konoha',
+                  clanId: null,
+                  clanRank: null,
+                  ninjaRank: 'Genin',
+                  elements: ['Fire'],
+                  bloodline: null,
+                  strength: 1000,
+                  intelligence: 1000,
+                  speed: 1000,
+                  defense: 1000,
+                  willpower: 1000,
+                  bukijutsu: 1000,
+                  ninjutsu: 1000,
+                  taijutsu: 1000,
+                  genjutsu: 0,
+                  jutsuMastery: {},
+                  currentHp: 40000,
+                  currentChakra: 30000,
+                  currentStamina: 30000,
+                  experience: 0,
+                  level: 1,
+                  hpRegenRate: 100,
+                  cpRegenRate: 100,
+                  spRegenRate: 100,
+                  ryoOnHand: 1000,
+                  ryoBanked: 0,
+                  villageLoyalty: 100,
+                  outlawInfamy: 0,
+                  marriedTo: null,
+                  senseiId: null,
+                  studentIds: [],
+                  pvpWins: 0,
+                  pvpLosses: 0,
+                  pveWins: 0,
+                  pveLosses: 0,
+                  medicalExp: 0,
+                  avatarUrl: null,
+                  gender: 'Unknown',
+                );
+                
+                await ref.read(authStateProvider.notifier).createCharacter(defaultCharacter, ref);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Create Character'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Please select a character to access training.',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(authStateProvider.notifier).selectCharacter(userCharacters.first, ref);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Select Character'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrainingStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveTrainingCard(TrainingSession session) {
+    final trainingNotifier = ref.read(activeTrainingSessionsProvider.notifier);
+    final completedNotifier = ref.read(completedTrainingSessionsProvider.notifier);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepOrange.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  TrainingService.getStatIcon(session.statType),
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Training ${TrainingService.getStatDisplayName(session.statType)}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Started ${session.formattedElapsedTime} ago',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (session.isComplete) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Complete',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Progress bar
+          Container(
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: Colors.grey.withValues(alpha: 0.3),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: session.progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  gradient: LinearGradient(
+                    colors: session.isComplete 
+                      ? [Colors.green, Colors.green.shade400]
+                      : [Colors.deepOrange, Colors.orange],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Progress: ${(session.progress * 100).toStringAsFixed(1)}%',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                session.isComplete ? 'Ready to collect!' : session.timeRemaining,
+                style: TextStyle(
+                  color: session.isComplete ? Colors.green : Colors.orange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+                    Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'Potential Gain: ${session.potentialGain}',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              if (session.isComplete) ...[
+                ElevatedButton(
+                  onPressed: () {
+                    // Complete training and update character
+                    final completedSession = trainingNotifier.completeTraining(session.id);
+                    if (completedSession != null) {
+                      completedNotifier.addCompletedSession(completedSession);
+                      
+                      // Update character stats using auth provider
+                      ref.read(authStateProvider.notifier).completeTraining(
+                        session.characterId, 
+                        session.statType, 
+                        completedSession.actualGain ?? 0, 
+                        ref
+                      );
+                      
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Training completed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession.actualGain}',
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Collect XP'),
+                ),
+              ] else ...[
+                ElevatedButton(
+                  onPressed: () {
+                    // Redeem training early
+                    final completedSession = trainingNotifier.completeTraining(session.id);
+                    if (completedSession != null) {
+                      completedNotifier.addCompletedSession(completedSession);
+                      
+                      // Update character stats using auth provider
+                      ref.read(authStateProvider.notifier).completeTraining(
+                        session.characterId, 
+                        session.statType, 
+                        completedSession.actualGain ?? 0, 
+                        ref
+                      );
+                      
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Training redeemed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession.actualGain}',
+                          ),
+                          backgroundColor: Colors.deepOrange,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Redeem'),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatTrainingCard(String statType, Character character, bool hasActiveSessions) {
+    final trainingNotifier = ref.read(activeTrainingSessionsProvider.notifier);
+    final isCurrentlyTraining = ref.watch(activeTrainingSessionsProvider.notifier).isTrainingStat(character.id, statType);
+    final canTrain = TrainingService.canTrainStat(character, statType);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isCurrentlyTraining 
+          ? Colors.deepOrange.withValues(alpha: 0.15)
+          : canTrain 
+            ? const Color(0xFF16213e)
+            : Colors.grey.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCurrentlyTraining 
+            ? Colors.deepOrange.withValues(alpha: 0.6)
+            : canTrain 
+              ? Colors.deepOrange.withValues(alpha: 0.4)
+              : Colors.grey.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isCurrentlyTraining 
+              ? Colors.deepOrange.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: canTrain && !isCurrentlyTraining ? () {
+          trainingNotifier.startTraining(character, statType);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Started training ${TrainingService.getStatDisplayName(statType)}',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isCurrentlyTraining 
+                        ? Colors.deepOrange.withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      TrainingService.getStatIcon(statType),
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      TrainingService.getStatDisplayName(statType),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (isCurrentlyTraining) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.deepOrange.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Text(
+                    'Training...',
+                    style: TextStyle(
+                      color: Colors.deepOrange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ] else if (canTrain) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Text(
+                    'Available',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Text(
+                    'Maxed',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
 
   Widget _buildShopTab() {
     return const Center(

@@ -16,11 +16,11 @@ class Character {
   final int defense;
   final int willpower;
   
-  // Combat Stats (max 500k, except BE at 50k)
+  // Combat Stats (max 500k)
   final int bukijutsu;
   final int ninjutsu;
   final int taijutsu;
-  final int bloodlineEfficiency;
+  final int genjutsu;
   
   // Jutsu Mastery
   final Map<String, int> jutsuMastery; // jutsuId -> level (1-10, 1-15 for bloodline)
@@ -31,6 +31,11 @@ class Character {
   final int currentStamina;
   final int experience;
   final int level;
+  
+  // Regeneration Rates (per 30 seconds)
+  final int hpRegenRate;
+  final int cpRegenRate;
+  final int spRegenRate;
   
   // Resources
   final int ryoOnHand;
@@ -50,6 +55,9 @@ class Character {
   final int pvpLosses;
   final int pveWins;
   final int pveLosses;
+  
+  // Medical System
+  final int medicalExp;
   
   // Settings
   final String? avatarUrl;
@@ -73,13 +81,16 @@ class Character {
     required this.bukijutsu,
     required this.ninjutsu,
     required this.taijutsu,
-    required this.bloodlineEfficiency,
+    required this.genjutsu,
     required this.jutsuMastery,
     required this.currentHp,
     required this.currentChakra,
     required this.currentStamina,
     required this.experience,
     required this.level,
+    required this.hpRegenRate,
+    required this.cpRegenRate,
+    required this.spRegenRate,
     required this.ryoOnHand,
     required this.ryoBanked,
     required this.villageLoyalty,
@@ -91,6 +102,7 @@ class Character {
     required this.pvpLosses,
     required this.pveWins,
     required this.pveLosses,
+    required this.medicalExp,
     this.avatarUrl,
     required this.gender,
   });
@@ -128,6 +140,9 @@ class Character {
     }
   }
 
+  // Check if character is currently training any stat
+  bool get isTraining => false; // This will be updated by the training provider
+
   Character copyWith({
     String? id,
     String? userId,
@@ -146,13 +161,16 @@ class Character {
     int? bukijutsu,
     int? ninjutsu,
     int? taijutsu,
-    int? bloodlineEfficiency,
+    int? genjutsu,
     Map<String, int>? jutsuMastery,
     int? currentHp,
     int? currentChakra,
     int? currentStamina,
     int? experience,
     int? level,
+    int? hpRegenRate,
+    int? cpRegenRate,
+    int? spRegenRate,
     int? ryoOnHand,
     int? ryoBanked,
     int? villageLoyalty,
@@ -164,6 +182,7 @@ class Character {
     int? pvpLosses,
     int? pveWins,
     int? pveLosses,
+    int? medicalExp,
     String? avatarUrl,
     String? gender,
   }) {
@@ -185,13 +204,16 @@ class Character {
       bukijutsu: bukijutsu ?? this.bukijutsu,
       ninjutsu: ninjutsu ?? this.ninjutsu,
       taijutsu: taijutsu ?? this.taijutsu,
-      bloodlineEfficiency: bloodlineEfficiency ?? this.bloodlineEfficiency,
+      genjutsu: genjutsu ?? this.genjutsu,
       jutsuMastery: jutsuMastery ?? this.jutsuMastery,
       currentHp: currentHp ?? this.currentHp,
       currentChakra: currentChakra ?? this.currentChakra,
       currentStamina: currentStamina ?? this.currentStamina,
       experience: experience ?? this.experience,
       level: level ?? this.level,
+      hpRegenRate: hpRegenRate ?? this.hpRegenRate,
+      cpRegenRate: cpRegenRate ?? this.cpRegenRate,
+      spRegenRate: spRegenRate ?? this.spRegenRate,
       ryoOnHand: ryoOnHand ?? this.ryoOnHand,
       ryoBanked: ryoBanked ?? this.ryoBanked,
       villageLoyalty: villageLoyalty ?? this.villageLoyalty,
@@ -203,6 +225,7 @@ class Character {
       pvpLosses: pvpLosses ?? this.pvpLosses,
       pveWins: pveWins ?? this.pveWins,
       pveLosses: pveLosses ?? this.pveLosses,
+      medicalExp: medicalExp ?? this.medicalExp,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       gender: gender ?? this.gender,
     );
@@ -227,13 +250,16 @@ class Character {
       'bukijutsu': bukijutsu,
       'ninjutsu': ninjutsu,
       'taijutsu': taijutsu,
-      'bloodlineEfficiency': bloodlineEfficiency,
+      'genjutsu': genjutsu,
       'jutsuMastery': jutsuMastery,
       'currentHp': currentHp,
       'currentChakra': currentChakra,
       'currentStamina': currentStamina,
       'experience': experience,
       'level': level,
+      'hpRegenRate': hpRegenRate,
+      'cpRegenRate': cpRegenRate,
+      'spRegenRate': spRegenRate,
       'ryoOnHand': ryoOnHand,
       'ryoBanked': ryoBanked,
       'villageLoyalty': villageLoyalty,
@@ -245,6 +271,7 @@ class Character {
       'pvpLosses': pvpLosses,
       'pveWins': pveWins,
       'pveLosses': pveLosses,
+      'medicalExp': medicalExp,
       'avatarUrl': avatarUrl,
       'gender': gender,
     };
@@ -269,13 +296,16 @@ class Character {
       bukijutsu: json['bukijutsu'],
       ninjutsu: json['ninjutsu'],
       taijutsu: json['taijutsu'],
-      bloodlineEfficiency: json['bloodlineEfficiency'],
+      genjutsu: json['genjutsu'],
       jutsuMastery: Map<String, int>.from(json['jutsuMastery']),
       currentHp: json['currentHp'],
       currentChakra: json['currentChakra'],
       currentStamina: json['currentStamina'],
       experience: json['experience'],
       level: json['level'],
+      hpRegenRate: json['hpRegenRate'] ?? 0,
+      cpRegenRate: json['cpRegenRate'] ?? 0,
+      spRegenRate: json['spRegenRate'] ?? 0,
       ryoOnHand: json['ryoOnHand'],
       ryoBanked: json['ryoBanked'],
       villageLoyalty: json['villageLoyalty'],
@@ -287,6 +317,7 @@ class Character {
       pvpLosses: json['pvpLosses'],
       pveWins: json['pveWins'],
       pveLosses: json['pveLosses'],
+      medicalExp: json['medicalExp'] ?? 0,
       avatarUrl: json['avatarUrl'],
       gender: json['gender'],
     );

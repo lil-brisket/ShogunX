@@ -116,7 +116,7 @@ class Jutsu {
       case 'bukijutsu': return character.bukijutsu;
       case 'ninjutsu': return character.ninjutsu;
       case 'taijutsu': return character.taijutsu;
-      case 'bloodlineEfficiency': return character.bloodlineEfficiency;
+              case 'genjutsu': return character.genjutsu;
       default: return 0;
     }
   }

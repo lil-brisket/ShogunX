@@ -7,3 +7,6 @@ export 'item.dart';
 export 'world.dart';
 export 'chat_message.dart';
 export 'game_update.dart';
+export 'training_session.dart';
+export 'medical_rank.dart';
+export 'hospital_patient.dart';

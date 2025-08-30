@@ -16,6 +16,34 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Start regeneration for the current character when the screen is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startRegeneration();
+    });
+  }
+
+  @override
+  void didUpdateWidget(ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Restart regeneration when the widget updates
+    _startRegeneration();
+  }
+
+  void _startRegeneration() {
+    final user = ref.read(authStateProvider).user;
+    if (user != null) {
+      final gameState = ref.read(gameStateProvider);
+      final currentCharacter = gameState.selectedCharacter;
+      if (currentCharacter != null) {
+        final regenerationNotifier = ref.read(characterRegenerationProvider(currentCharacter.id).notifier);
+        regenerationNotifier.startRegeneration(currentCharacter);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).user;
     
@@ -28,32 +56,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
 
-    // Get the current character
-    final currentCharacterId = user.currentCharacterId;
-    if (currentCharacterId == null) {
+    // Get the current character from game state instead of character provider
+    final gameState = ref.watch(gameStateProvider);
+    final currentCharacter = gameState.selectedCharacter;
+    
+    if (currentCharacter == null) {
       return _buildNoCharacterScreen();
     }
-
-    final characterAsync = ref.watch(characterProvider(currentCharacterId));
     
-    return characterAsync.when(
-      data: (character) => character != null ? _buildProfileContent(context, user, character) : _buildNoCharacterScreen(),
-      loading: () => const Scaffold(
-        backgroundColor: Color(0xFF0f3460),
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.deepOrange),
-        ),
-      ),
-      error: (error, _) => Scaffold(
-        backgroundColor: const Color(0xFF0f3460),
-        body: Center(
-          child: Text(
-            'Error loading character: $error',
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      ),
-    );
+    return _buildProfileContent(context, user, currentCharacter);
   }
 
   Widget _buildNoCharacterScreen() {
@@ -241,11 +252,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             _buildStatRow('Bukijutsu', character.bukijutsu, 500000),
                             _buildStatRow('Ninjutsu', character.ninjutsu, 500000),
                             _buildStatRow('Taijutsu', character.taijutsu, 500000),
-                            _buildStatRow('Bloodline Eff', character.bloodlineEfficiency, 50000),
+                            _buildStatRow('Genjutsu', character.genjutsu, 500000),
                           ]),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    
+                    // Medical Rank Section
+                    _buildMedicalRankCard(character),
+                    const SizedBox(height: 16),
                     const SizedBox(height: 16),
                     
                     // Resources & Records
@@ -565,6 +581,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _buildResourceBar('CP', character.currentChakra, character.maxChakra, Colors.blue),
                 _buildResourceBar('STA', character.currentStamina, character.maxStamina, Colors.green),
                 const SizedBox(height: 8),
+                _buildRegenerationRates(character),
+                const SizedBox(height: 8),
                 _buildRyoRow('On Hand', character.ryoOnHand, Colors.orange),
                 _buildRyoRow('In Bank', character.ryoBanked, Colors.green),
                 Container(
@@ -658,6 +676,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildRegenerationRates(Character character) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.deepOrange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.healing, color: Colors.deepOrange, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                'Regeneration Rates (per 30s)',
+                style: TextStyle(
+                  color: Colors.deepOrange,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        _buildRegenRateRow('HP', character.hpRegenRate, Colors.red),
+        _buildRegenRateRow('CP', character.cpRegenRate, Colors.blue),
+        _buildRegenRateRow('SP', character.spRegenRate, Colors.green),
+      ],
+    );
+  }
+
+  Widget _buildRegenRateRow(String name, int rate, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(
+            name == 'HP' ? Icons.favorite : name == 'CP' ? Icons.water_drop : Icons.fitness_center,
+            color: color,
+            size: 12,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$name Regen',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 11,
+              ),
+            ),
+          ),
+          Text(
+            '+${_formatNumber(rate)}',
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecordsCard(Character character) {
     final totalPvP = character.pvpWins + character.pvpLosses;
     final totalPvE = character.pveWins + character.pveLosses;
@@ -703,10 +787,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 _buildRecordRow('PvP Wins', character.pvpWins, Colors.green),
                 _buildRecordRow('PvP Losses', character.pvpLosses, Colors.red),
+                _buildRecordRow('PvP Total', '$totalPvP', Colors.blue),
                 _buildRecordRow('PvP Rate', '${(character.pvpWinRate * 100).toStringAsFixed(1)}%', Colors.orange),
                 const SizedBox(height: 6),
                 _buildRecordRow('PvE Wins', character.pveWins, Colors.green),
                 _buildRecordRow('PvE Losses', character.pveLosses, Colors.red),
+                _buildRecordRow('PvE Total', '$totalPvE', Colors.blue),
                 _buildRecordRow('PvE Rate', '${(character.pveWinRate * 100).toStringAsFixed(1)}%', Colors.orange),
               ],
             ),
@@ -921,6 +1007,151 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildMedicalRankCard(Character character) {
+    final medicalRank = MedicalRank.getRankByExp(character.medicalExp);
+    final progress = MedicalRank.getProgressToNextRank(character.medicalExp);
+    final nextRank = MedicalRank.getNextRank(character.medicalExp);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.2),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.local_hospital, color: Colors.orange, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Medical Rank',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            medicalRank.name,
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            medicalRank.description,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'EXP: ${character.medicalExp.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Next: ${nextRank.name}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        SizedBox(
+                          width: 60,
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.grey[800],
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMedicalStatInfo('CP/HP', medicalRank.cpPerHp.toStringAsFixed(1)),
+                    ),
+                    Expanded(
+                      child: _buildMedicalStatInfo('SP/HP', medicalRank.spPerHp.toStringAsFixed(1)),
+                    ),
+                    Expanded(
+                      child: _buildMedicalStatInfo('Efficiency', '${(medicalRank.healingEfficiency * 100).toStringAsFixed(0)}%'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMedicalStatInfo(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 10,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.orange,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBloodlineChip(String bloodline) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1099,52 +1330,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, List<Widget> children) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.deepOrange.withValues(alpha: 0.2),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: children,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
@@ -1177,70 +1363,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingAction(String title, String description, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.deepOrange.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.deepOrange, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.deepOrange.withValues(alpha: 0.7),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
+
+
 
   void _showBankingDialog(Character character) {
     showDialog(

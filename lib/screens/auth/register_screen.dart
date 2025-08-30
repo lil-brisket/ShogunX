@@ -33,6 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _usernameController.text.trim(),
         _passwordController.text,
         _selectedVillage,
+        ref,
       );
       
       if (success) {
