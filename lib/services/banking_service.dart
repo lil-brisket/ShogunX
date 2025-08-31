@@ -371,6 +371,7 @@ class BankingService {
         pveLosses: 5,
         medicalExp: 0,
         gender: 'male',
+        inventory: [],
       ),
       Character(
         id: 'char_search_2',
@@ -408,6 +409,7 @@ class BankingService {
         pveLosses: 3,
         medicalExp: 0,
         gender: 'female',
+        inventory: [],
       ),
     ];
 

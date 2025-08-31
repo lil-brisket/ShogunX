@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/game_service.dart';
 import '../services/banking_service.dart';
+import '../services/shop_service.dart';
+import '../providers/shop_provider.dart';
 import '../models/models.dart';
 
 // Game Service Provider
@@ -8,6 +10,12 @@ final gameServiceProvider = Provider<GameService>((ref) => GameService());
 
 // Banking Service Provider
 final bankingServiceProvider = Provider<BankingService>((ref) => BankingService());
+
+// Shop Service Provider
+final shopServiceProvider = Provider<ShopService>((ref) => ShopService());
+
+// Shop Provider
+final shopProviderProvider = ChangeNotifierProvider<ShopProvider>((ref) => ShopProvider());
 
 // Character Providers
 final characterProvider = FutureProvider.family<Character?, String>((ref, characterId) async {

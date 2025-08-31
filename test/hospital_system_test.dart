@@ -16,9 +16,9 @@ void main() {
 
     test('MedicalRank should calculate progress correctly', () {
       expect(MedicalRank.getProgressToNextRank(0), equals(0.0));
-      expect(MedicalRank.getProgressToNextRank(12500), equals(0.5));
+      expect(MedicalRank.getProgressToNextRank(12500), closeTo(0.5, 0.001));
       expect(MedicalRank.getProgressToNextRank(25000), equals(1.0));
-      expect(MedicalRank.getProgressToNextRank(37500), equals(0.5));
+      expect(MedicalRank.getProgressToNextRank(37500), closeTo(0.5, 0.001));
     });
 
     test('HospitalPatient should calculate health percentages correctly', () {
@@ -56,7 +56,7 @@ void main() {
       );
 
       final cost = hospitalService.getHealingCost(patient);
-      expect(cost, equals(100)); // 50 missing HP + 75 missing CP + 25 missing SP
+      expect(cost, equals(150)); // 50 missing HP + 75 missing CP + 25 missing SP
     });
   });
 }

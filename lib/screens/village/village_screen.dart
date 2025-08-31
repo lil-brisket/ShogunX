@@ -34,6 +34,11 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
         setState(() {}); // Trigger rebuild to update training progress
       }
     });
+    
+    // Initialize shop immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(shopProviderProvider.notifier).initializeShop();
+    });
   }
 
   @override
@@ -760,56 +765,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     );
   }
 
-  Widget _buildTrainingSystemInfo() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213e).withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.deepOrange,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Training System Info',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '• Each training session lasts up to 8 hours\n'
-            '• XP gain is capped to prevent exceeding max stat\n'
-            '• Early collection does not penalize XP gain\n'
-            '• Idle-friendly: you can log off and still gain XP\n'
-            '• Only one stat can be trained at a time\n'
-            '• Base rate: ${TrainingSession.baseRate.toStringAsFixed(2)} XP per second',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildNoUserMessage() {
     return Center(
@@ -896,6 +852,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                   medicalExp: 0,
                   avatarUrl: null,
                   gender: 'Unknown',
+                  inventory: [],
                 );
                 
                 await ref.read(authStateProvider.notifier).createCharacter(defaultCharacter, ref);
@@ -935,42 +892,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     );
   }
 
-  Widget _buildTrainingStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildActiveTrainingCard(TrainingSession session) {
     final trainingNotifier = ref.read(activeTrainingSessionsProvider.notifier);
@@ -1354,10 +1276,664 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
 
 
   Widget _buildShopTab() {
-    return const Center(
-      child: Text(
-        'Item Shop coming soon!',
-        style: TextStyle(color: Colors.white, fontSize: 18),
+    return Consumer(
+      builder: (context, ref, child) {
+        final shopProvider = ref.watch(shopProviderProvider);
+        final character = ref.watch(selectedCharacterProvider);
+        
+        if (character == null) {
+          return const Center(
+            child: Text(
+              'No character selected',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          );
+        }
+        
+        return Column(
+          children: [
+            // Shop Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF16213e),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.amber.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.shopping_cart, color: Colors.amber, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Item Shop',
+                          style: TextStyle(
+                            color: Colors.amber,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Available Ryo: ${character.ryoOnHand}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Filters
+            _buildShopFilters(shopProvider),
+            
+            const SizedBox(height: 16),
+            
+            // Equipment Categories
+            _buildEquipmentCategories(shopProvider),
+            
+            const SizedBox(height: 16),
+            
+            // Items List
+            Expanded(
+              child: _buildItemsList(shopProvider, character),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildShopFilters(ShopProvider shopProvider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.amber.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Filters',
+            style: TextStyle(
+              color: Colors.amber,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: shopProvider.selectedCategory,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber),
+                    ),
+                  ),
+                  dropdownColor: const Color(0xFF16213e),
+                  style: const TextStyle(color: Colors.white),
+                  items: shopProvider.getAvailableCategories().map((category) {
+                    return DropdownMenuItem(
+                      value: category,
+                      child: Text(
+                        category == 'all' ? 'All Categories' : category,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(shopProviderProvider.notifier).setCategory(value);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: shopProvider.selectedRarity,
+                  decoration: InputDecoration(
+                    labelText: 'Rarity',
+                    labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber),
+                    ),
+                  ),
+                  dropdownColor: const Color(0xFF16213e),
+                  style: const TextStyle(color: Colors.white),
+                  items: shopProvider.getAvailableRarities().map((rarity) {
+                    return DropdownMenuItem(
+                      value: rarity,
+                      child: Text(
+                        rarity == 'all' ? 'All Rarities' : rarity,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(shopProviderProvider.notifier).setRarity(value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: TextEditingController(text: shopProvider.searchTerm),
+                  decoration: InputDecoration(
+                    labelText: 'Search',
+                    labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    hintText: 'Search items...',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.amber),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (value) {
+                    ref.read(shopProviderProvider.notifier).setSearchTerm(value);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(shopProviderProvider.notifier).clearFilters();
+                },
+                icon: Icon(Icons.clear, color: Colors.white),
+                label: Text('Clear', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEquipmentCategories(ShopProvider shopProvider) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildCategoryChip(shopProvider, null, 'All Equipment', Icons.all_inclusive),
+          _buildCategoryChip(shopProvider, EquipmentSlot.head, 'Head', Icons.face),
+          _buildCategoryChip(shopProvider, EquipmentSlot.arms, 'Arms', Icons.accessibility),
+          _buildCategoryChip(shopProvider, EquipmentSlot.body, 'Body', Icons.person),
+          _buildCategoryChip(shopProvider, EquipmentSlot.legs, 'Legs', Icons.directions_walk),
+          _buildCategoryChip(shopProvider, EquipmentSlot.feet, 'Feet', Icons.sports_soccer),
+          _buildCategoryChip(shopProvider, EquipmentSlot.weapon, 'Weapons', Icons.gps_fixed),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(ShopProvider shopProvider, EquipmentSlot? slot, String label, IconData icon) {
+    final isSelected = shopProvider.selectedEquipmentSlot == slot;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isSelected,
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.amber),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.amber)),
+          ],
+        ),
+        selectedColor: Colors.amber,
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: Colors.amber.withValues(alpha: 0.5)),
+        onSelected: (selected) {
+          ref.read(shopProviderProvider.notifier).setEquipmentSlot(selected ? slot : null);
+        },
+      ),
+    );
+  }
+
+  Widget _buildItemsList(ShopProvider shopProvider, Character character) {
+    final items = shopProvider.filteredItems;
+    
+    if (items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, color: Colors.white.withValues(alpha: 0.5), size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'No items found',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 18,
+              ),
+            ),
+            Text(
+              'Try adjusting your filters',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return _buildItemCard(item, character, shopProvider);
+      },
+    );
+  }
+
+  Widget _buildItemCard(Item item, Character character, ShopProvider shopProvider) {
+    final canAfford = shopProvider.canAffordItem(character, item);
+    final canUse = shopProvider.canUseItem(character, item);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: item.rarityColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: item.rarityColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(item.typeIcon, color: item.rarityColor, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            item.name,
+                            style: TextStyle(
+                              color: item.rarityColor,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: item.rarityColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              item.rarity,
+                              style: TextStyle(
+                                color: item.rarityColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        item.description,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${item.buyPrice} Ryo',
+                      style: TextStyle(
+                        color: canAfford ? Colors.green : Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Level ${item.requiredLevel}',
+                      style: TextStyle(
+                        color: canUse ? Colors.green : Colors.orange,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            
+            if (item.statBonuses.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Stat Bonuses:',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: item.statBonuses.entries.map((entry) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${entry.key}: +${entry.value}',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            
+            if (item.specialEffects.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Special Effects:',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: item.specialEffects.map((effect) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      effect.replaceAll('_', ' ').toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: canAfford && canUse ? () => _purchaseItem(item, character) : null,
+                    icon: Icon(Icons.shopping_cart, color: Colors.white),
+                    label: Text('Purchase', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: canAfford && canUse ? Colors.green : Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showItemDetails(item),
+                    icon: Icon(Icons.info, color: Colors.amber),
+                    label: Text('Details', style: TextStyle(color: Colors.amber)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.amber),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _purchaseItem(Item item, Character character) async {
+    final shopProvider = ref.read(shopProviderProvider.notifier);
+    
+    try {
+      // Attempt to purchase the item using the new async method
+      final result = await shopProvider.purchaseItem(character, item);
+      
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
+      
+      if (result.success) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        
+        // Update the game state provider so profile and loadout screens can see changes
+        if (result.updatedCharacter != null) {
+          ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
+        }
+        
+        // Invalidate character provider to refresh character data
+        ref.invalidate(characterProvider(character.id));
+        
+        // Refresh the shop to show updated Ryo
+        ref.read(shopProviderProvider.notifier).initializeShop();
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
+      
+      // Show error message for exceptions
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Purchase failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _showItemDetails(Item item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: Text(
+          item.name,
+          style: TextStyle(color: item.rarityColor),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.description,
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              if (item.statBonuses.isNotEmpty) ...[
+                Text(
+                  'Stat Bonuses:',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...item.statBonuses.entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${entry.key}: +${entry.value}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                )),
+                const SizedBox(height: 16),
+              ],
+              if (item.statMultipliers.isNotEmpty) ...[
+                Text(
+                  'Stat Multipliers:',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...item.statMultipliers.entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${entry.key}: x${entry.value}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                )),
+                const SizedBox(height: 16),
+              ],
+              if (item.specialEffects.isNotEmpty) ...[
+                Text(
+                  'Special Effects:',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...item.specialEffects.map((effect) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '• ${effect.replaceAll('_', ' ').toUpperCase()}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                )),
+                const SizedBox(height: 16),
+              ],
+              Text(
+                'Price: ${item.buyPrice} Ryo',
+                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Required Level: ${item.requiredLevel}',
+                style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+              ),
+              if (item.durability != null) ...[
+                Text(
+                  'Durability: ${item.durability}/${item.maxDurability}',
+                  style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close', style: TextStyle(color: Colors.amber)),
+          ),
+        ],
       ),
     );
   }
@@ -1471,56 +2047,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     );
   }
 
-  Widget _buildHospitalAction(String title, String description, IconData icon, Color color, VoidCallback onTap) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: color.withValues(alpha: 0.7),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Color _getMissionRankColor(MissionRank rank) {
     switch (rank) {

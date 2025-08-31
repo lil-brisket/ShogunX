@@ -2492,32 +2492,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
   }
-
-  void _showInfoDialog(String title, String content) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF16213e),
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          content,
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'OK',
-              style: TextStyle(color: Colors.deepOrange),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/providers.dart';
+import '../../models/models.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/game_provider.dart';
 
 class LoadoutScreen extends ConsumerStatefulWidget {
   const LoadoutScreen({super.key});
@@ -125,6 +127,17 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
   }
 
   Widget _buildEquipmentTab() {
+    final currentCharacter = ref.watch(gameStateProvider).selectedCharacter;
+    
+    if (currentCharacter == null) {
+      return const Center(
+        child: Text(
+          'No character selected',
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      );
+    }
+    
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -133,13 +146,17 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
           Expanded(
             child: ListView(
               children: [
-                _buildEquipmentSlot('Head', Icons.face, null),
-                _buildEquipmentSlot('Left Arm', Icons.accessibility, null),
-                _buildEquipmentSlot('Right Arm', Icons.accessibility, null),
-                _buildEquipmentSlot('Body', Icons.person, null),
-                _buildEquipmentSlot('Legs', Icons.directions_walk, null),
-                _buildEquipmentSlot('Feet', Icons.directions_run, null),
-                _buildEquipmentSlot('Weapon', Icons.gps_fixed, null),
+                _buildEquipmentSlot('Head', Icons.face, _getEquippedItem(currentCharacter, EquipmentSlot.head)),
+                _buildEquipmentSlot('Arms', Icons.accessibility, _getEquippedItem(currentCharacter, EquipmentSlot.arms)),
+                _buildEquipmentSlot('Body', Icons.person, _getEquippedItem(currentCharacter, EquipmentSlot.body)),
+                _buildEquipmentSlot('Legs', Icons.directions_walk, _getEquippedItem(currentCharacter, EquipmentSlot.legs)),
+                _buildEquipmentSlot('Feet', Icons.directions_run, _getEquippedItem(currentCharacter, EquipmentSlot.feet)),
+                _buildEquipmentSlot('Weapon', Icons.gps_fixed, _getEquippedItem(currentCharacter, EquipmentSlot.weapon)),
+                
+                const SizedBox(height: 20),
+                
+                // Inventory Section
+                _buildInventorySection(currentCharacter),
               ],
             ),
           ),
@@ -364,7 +381,183 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
     );
   }
 
-  Widget _buildEquipmentSlot(String slotName, IconData icon, String? itemName) {
+  Item? _getEquippedItem(Character character, EquipmentSlot slot) {
+    // Find items equipped in the specified slot
+    return character.inventory.where((item) => 
+      item.equipmentSlot == slot && item.isActive
+    ).firstOrNull;
+  }
+
+  Widget _buildInventorySection(Character character) {
+    final inventory = character.inventory;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213e),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.deepOrange.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.inventory_2,
+                  color: Colors.deepOrange,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Inventory (${inventory.length} items)',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          if (inventory.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.inventory_2,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      size: 48,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your inventory is empty',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Visit the Item Shop to purchase equipment',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: inventory.map((item) => _buildInventoryItemCard(item)).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInventoryItemCard(Item item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1a1a2e),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: item.rarityColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: item.rarityColor.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(item.typeIcon, color: item.rarityColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      item.name,
+                      style: TextStyle(
+                        color: item.rarityColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Text(
+                        item.rarity,
+                        style: TextStyle(
+                          color: item.rarityColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (item.statBonuses.isNotEmpty)
+                  Text(
+                    'Stats: ${item.statBonuses.entries.map((e) => '+${e.value} ${e.key}').join(', ')}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (item.equipmentSlot != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                'Equip',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEquipmentSlot(String slotName, IconData icon, Item? equippedItem) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -372,12 +565,28 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
         color: const Color(0xFF16213e),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: itemName != null ? Colors.deepOrange : Colors.grey.withValues(alpha: 0.3),
+          color: equippedItem != null 
+            ? equippedItem.rarityColor.withValues(alpha: 0.5)
+            : Colors.white.withValues(alpha: 0.2),
+          width: 2,
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.deepOrange, size: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: equippedItem != null 
+                ? equippedItem.rarityColor.withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              equippedItem?.typeIcon ?? icon,
+              color: equippedItem?.rarityColor ?? Colors.white.withValues(alpha: 0.5),
+              size: 24,
+            ),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -385,27 +594,62 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
               children: [
                 Text(
                   slotName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  itemName ?? 'Empty',
                   style: TextStyle(
-                    color: itemName != null ? Colors.white.withValues(alpha: 0.7) : Colors.grey,
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (equippedItem != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    equippedItem.name,
+                    style: TextStyle(
+                      color: equippedItem.rarityColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (equippedItem.statBonuses.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Stats: ${equippedItem.statBonuses.entries.map((e) => '+${e.value} ${e.key}').join(', ')}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ] else ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Empty',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          if (itemName != null)
-            Icon(
-              Icons.remove_circle_outline,
-              color: Colors.red,
-              size: 20,
+          if (equippedItem != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: equippedItem.rarityColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: equippedItem.rarityColor.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                equippedItem.rarity,
+                style: TextStyle(
+                  color: equippedItem.rarityColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
         ],
       ),

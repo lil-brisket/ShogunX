@@ -50,6 +50,7 @@ class StubDataService {
       medicalExp: 0,
       avatarUrl: 'assets/avatars/naruto.png',
       gender: 'male',
+      inventory: [],
     ),
     Character(
       id: 'char_2',
@@ -93,6 +94,7 @@ class StubDataService {
       medicalExp: 0,
       avatarUrl: 'assets/avatars/sasuke.png',
       gender: 'male',
+      inventory: [],
     ),
   ];
 

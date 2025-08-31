@@ -9,11 +9,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ninja_world_mmo/main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   testWidgets('Ninja World MMO app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const NinjaWorldMMOApp());
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: NinjaWorldMMOApp(),
+      ),
+    );
+
+    // Wait for any pending timers to complete
+    await tester.pumpAndSettle();
 
     // Verify that the app loads without crashing
     expect(find.byType(MaterialApp), findsOneWidget);

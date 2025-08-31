@@ -140,6 +140,7 @@ class AuthService {
       medicalExp: 0,
       avatarUrl: null,
       gender: 'Unknown',
+      inventory: [],
     );
   }
 

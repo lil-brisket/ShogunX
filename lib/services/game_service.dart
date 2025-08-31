@@ -95,6 +95,7 @@ class GameService {
       // Settings
       avatarUrl: null,
       gender: 'male',
+      inventory: [],
     );
   }
 

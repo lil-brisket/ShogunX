@@ -11,7 +11,10 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 });
 
 // Character selection provider
-final selectedCharacterProvider = StateProvider<Character?>((ref) => null);
+final selectedCharacterProvider = StateProvider<Character?>((ref) {
+  final gameState = ref.watch(gameStateProvider);
+  return gameState.selectedCharacter;
+});
 
 // Game state provider for character management
 final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((ref) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'character.dart';
 
 enum ItemType { weapon, armor, consumable, material, cosmetic }
 enum EquipmentSlot { head, arms, body, legs, feet, weapon }
@@ -70,7 +69,7 @@ class Item {
   });
 
   // Check if character can equip/use this item
-  bool canUse(Character character) {
+  bool canUse(dynamic character) {
     if (!isActive) return false;
     if (character.level < requiredLevel) return false;
     
@@ -97,7 +96,7 @@ class Item {
   }
 
   // Check if character can afford this item
-  bool canAfford(Character character) {
+  bool canAfford(dynamic character) {
     return character.ryoOnHand >= buyPrice;
   }
 
@@ -113,7 +112,7 @@ class Item {
     return durability! < maxDurability!;
   }
 
-  int _getStatValue(Character character, String stat) {
+  int _getStatValue(dynamic character, String stat) {
     switch (stat) {
       case 'strength': return character.strength;
       case 'intelligence': return character.intelligence;

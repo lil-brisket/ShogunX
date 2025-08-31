@@ -1,8 +1,8 @@
 // Example usage of the UpdateManager for adding project updates
 
 import 'package:flutter/material.dart';
-import '../lib/services/update_manager.dart';
-import '../lib/models/models.dart';
+import 'package:ninja_world_mmo/services/update_manager.dart';
+import 'package:ninja_world_mmo/models/models.dart';
 
 class UpdateExamples {
   

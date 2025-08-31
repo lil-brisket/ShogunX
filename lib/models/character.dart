@@ -1,3 +1,5 @@
+import 'item.dart';
+
 class Character {
   final String id;
   final String userId;
@@ -63,6 +65,9 @@ class Character {
   final String? avatarUrl;
   final String gender;
   
+  // Inventory
+  final List<Item> inventory;
+  
   Character({
     required this.id,
     required this.userId,
@@ -105,6 +110,7 @@ class Character {
     required this.medicalExp,
     this.avatarUrl,
     required this.gender,
+    required this.inventory,
   });
 
   // Getters for calculated stats
@@ -185,6 +191,7 @@ class Character {
     int? medicalExp,
     String? avatarUrl,
     String? gender,
+    List<Item>? inventory,
   }) {
     return Character(
       id: id ?? this.id,
@@ -228,6 +235,7 @@ class Character {
       medicalExp: medicalExp ?? this.medicalExp,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       gender: gender ?? this.gender,
+      inventory: inventory ?? this.inventory,
     );
   }
 
@@ -274,6 +282,7 @@ class Character {
       'medicalExp': medicalExp,
       'avatarUrl': avatarUrl,
       'gender': gender,
+      'inventory': inventory.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -320,6 +329,9 @@ class Character {
       medicalExp: json['medicalExp'] ?? 0,
       avatarUrl: json['avatarUrl'],
       gender: json['gender'],
+      inventory: json['inventory'] != null 
+          ? List<Item>.from(json['inventory'].map((x) => Item.fromJson(x)))
+          : [],
     );
   }
 }
