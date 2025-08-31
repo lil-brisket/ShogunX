@@ -8,3 +8,4 @@ export 'regeneration_service.dart';
 export 'character_update_service.dart';
 export 'avatar_service.dart';
 export 'shop_service.dart';
+export 'equipment_service.dart';

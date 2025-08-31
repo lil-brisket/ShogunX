@@ -141,6 +141,7 @@ class AuthService {
       avatarUrl: null,
       gender: 'Unknown',
       inventory: [],
+      equippedItems: {},
     );
   }
 

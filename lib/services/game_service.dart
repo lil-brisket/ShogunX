@@ -96,6 +96,7 @@ class GameService {
       avatarUrl: null,
       gender: 'male',
       inventory: [],
+      equippedItems: {},
     );
   }
 

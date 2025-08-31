@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 enum ItemType { weapon, armor, consumable, material, cosmetic }
 enum EquipmentSlot { head, arms, body, legs, feet, weapon }
 
+extension EquipmentSlotExtension on EquipmentSlot {
+  static EquipmentSlot fromName(String name) {
+    return EquipmentSlot.values.firstWhere(
+      (slot) => slot.name == name,
+      orElse: () => EquipmentSlot.weapon, // Default fallback
+    );
+  }
+}
+
 class Item {
   final String id;
   final String name;

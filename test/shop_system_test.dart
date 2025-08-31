@@ -55,6 +55,7 @@ void main() {
         avatarUrl: null,
         gender: 'male',
         inventory: [],
+        equippedItems: {},
       );
 
       // Create a test item

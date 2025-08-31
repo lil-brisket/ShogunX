@@ -125,6 +125,11 @@ class ShopProvider extends ChangeNotifier {
     return await _shopService.purchaseItem(character, item);
   }
   
+  // Purchase and equip an item
+  Future<ShopPurchaseResult> purchaseAndEquipItem(Character character, Item item) async {
+    return await _shopService.purchaseAndEquipItem(character, item);
+  }
+  
   // Get available categories
   List<String> getAvailableCategories() {
     final categories = _availableItems

@@ -853,6 +853,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                   avatarUrl: null,
                   gender: 'Unknown',
                   inventory: [],
+                  equippedItems: {},
                 );
                 
                 await ref.read(authStateProvider.notifier).createCharacter(defaultCharacter, ref);

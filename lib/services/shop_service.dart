@@ -1,6 +1,7 @@
 import '../models/models.dart';
 import 'stub_data.dart';
 import 'game_service.dart';
+import 'equipment_service.dart';
 
 class ShopService {
   // Singleton pattern
@@ -9,6 +10,7 @@ class ShopService {
   ShopService._internal();
 
   final GameService _gameService = GameService();
+  final EquipmentService _equipmentService = EquipmentService();
 
   // Get all available shop items
   List<Item> getAvailableItems() {
@@ -109,7 +111,7 @@ class ShopService {
       
       return ShopPurchaseResult(
         success: true,
-        message: 'Successfully purchased ${item.name} for ${item.buyPrice} ryo!',
+        message: 'Successfully purchased ${item.name} for ${item.buyPrice} ryo! Item added to inventory.',
         updatedCharacter: updatedCharacter,
         purchasedItem: purchasedItem,
       );
@@ -119,6 +121,43 @@ class ShopService {
         message: 'Purchase failed: $e',
       );
     }
+  }
+
+  // Purchase and equip an item
+  Future<ShopPurchaseResult> purchaseAndEquipItem(Character character, Item item) async {
+    // First purchase the item
+    final purchaseResult = await purchaseItem(character, item);
+    
+    if (!purchaseResult.success) {
+      return purchaseResult;
+    }
+    
+    // If purchase was successful and item is equippable, try to equip it
+    if (item.equipmentSlot != null && purchaseResult.updatedCharacter != null) {
+      final equipResult = await _equipmentService.equipItem(
+        purchaseResult.updatedCharacter!, 
+        purchaseResult.purchasedItem!
+      );
+      
+      if (equipResult.success) {
+        return ShopPurchaseResult(
+          success: true,
+          message: '${purchaseResult.message} ${equipResult.message}',
+          updatedCharacter: equipResult.updatedCharacter,
+          purchasedItem: purchaseResult.purchasedItem,
+        );
+      } else {
+        // Purchase succeeded but equip failed - item is still in inventory
+        return ShopPurchaseResult(
+          success: true,
+          message: '${purchaseResult.message} Failed to equip: ${equipResult.message}',
+          updatedCharacter: purchaseResult.updatedCharacter,
+          purchasedItem: purchaseResult.purchasedItem,
+        );
+      }
+    }
+    
+    return purchaseResult;
   }
 
   // Get filtered items based on multiple criteria

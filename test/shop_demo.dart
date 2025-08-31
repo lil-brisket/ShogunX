@@ -52,6 +52,7 @@ void main() async {
     avatarUrl: null,
     gender: 'male',
     inventory: [],
+    equippedItems: {},
   );
   
   print('Initial Character State:');

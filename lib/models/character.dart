@@ -68,6 +68,9 @@ class Character {
   // Inventory
   final List<Item> inventory;
   
+  // Equipped Items
+  final Map<EquipmentSlot, Item?> equippedItems;
+  
   Character({
     required this.id,
     required this.userId,
@@ -111,6 +114,7 @@ class Character {
     this.avatarUrl,
     required this.gender,
     required this.inventory,
+    required this.equippedItems,
   });
 
   // Getters for calculated stats
@@ -192,6 +196,7 @@ class Character {
     String? avatarUrl,
     String? gender,
     List<Item>? inventory,
+    Map<EquipmentSlot, Item?>? equippedItems,
   }) {
     return Character(
       id: id ?? this.id,
@@ -236,6 +241,7 @@ class Character {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       gender: gender ?? this.gender,
       inventory: inventory ?? this.inventory,
+      equippedItems: equippedItems ?? this.equippedItems,
     );
   }
 
@@ -283,6 +289,7 @@ class Character {
       'avatarUrl': avatarUrl,
       'gender': gender,
       'inventory': inventory.map((item) => item.toJson()).toList(),
+      'equippedItems': equippedItems.map((slot, item) => MapEntry(slot.name, item?.toJson())),
     };
   }
 
@@ -332,6 +339,16 @@ class Character {
       inventory: json['inventory'] != null 
           ? List<Item>.from(json['inventory'].map((x) => Item.fromJson(x)))
           : [],
+      equippedItems: json['equippedItems'] != null 
+          ? Map<EquipmentSlot, Item?>.fromEntries(
+              (json['equippedItems'] as Map<String, dynamic>).entries.map(
+                (entry) => MapEntry(
+                  EquipmentSlotExtension.fromName(entry.key),
+                  entry.value != null ? Item.fromJson(entry.value) : null,
+                ),
+              ),
+            )
+          : {},
     );
   }
 }
