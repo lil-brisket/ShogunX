@@ -52,8 +52,8 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       // Refresh the patients list
       _ref.invalidate(hospitalPatientsProvider);
       state = const AsyncValue.data(null);
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+    } catch (error, _) {
+      state = AsyncValue.error(error, StackTrace.current);
     }
   }
 
@@ -68,8 +68,8 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       }
       state = const AsyncValue.data(null);
       return success;
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+    } catch (error, _) {
+      state = AsyncValue.error(error, StackTrace.current);
       return false;
     }
   }
@@ -87,8 +87,8 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       }
       state = const AsyncValue.data(null);
       return result;
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+    } catch (error, _) {
+      state = AsyncValue.error(error, StackTrace.current);
       return HealingResult.failure('An error occurred during healing');
     }
   }
@@ -101,8 +101,8 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       // Refresh the patients list
       _ref.invalidate(hospitalPatientsProvider);
       state = const AsyncValue.data(null);
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+    } catch (error, _) {
+      state = AsyncValue.error(error, StackTrace.current);
     }
   }
 
@@ -114,8 +114,8 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       // Refresh the patients list
       _ref.invalidate(hospitalPatientsProvider);
       state = const AsyncValue.data(null);
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+    } catch (error, _) {
+      state = AsyncValue.error(error, StackTrace.current);
     }
   }
 
@@ -126,7 +126,7 @@ class HospitalNotifier extends StateNotifier<AsyncValue<void>> {
       // Refresh medical rank and EXP
       _ref.invalidate(medicalRankProvider(characterId));
       _ref.invalidate(medicalExpProvider(characterId));
-    } catch (error, stackTrace) {
+    } catch (error, _) {
       // Handle error silently for EXP updates
     }
   }

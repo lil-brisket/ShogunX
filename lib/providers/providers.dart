@@ -3,3 +3,4 @@ export 'game_provider.dart';
 export 'training_provider.dart';
 export 'hospital_provider.dart';
 export 'regeneration_provider.dart';
+export 'character_update_provider.dart';

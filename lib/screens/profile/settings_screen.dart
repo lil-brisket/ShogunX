@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/providers.dart';
 import '../../models/models.dart';
+import '../../services/services.dart';
+import 'avatar_change_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -12,6 +14,16 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _displayNameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _displayNameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).user;
@@ -25,32 +37,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
     }
 
-    // Get the current character
-    final currentCharacterId = user.currentCharacterId;
-    if (currentCharacterId == null) {
+    // Get the current character from game state
+    final gameState = ref.watch(gameStateProvider);
+    final currentCharacter = gameState.selectedCharacter;
+    
+    if (currentCharacter == null) {
       return _buildNoCharacterScreen();
     }
-
-    final characterAsync = ref.watch(characterProvider(currentCharacterId));
     
-    return characterAsync.when(
-      data: (character) => character != null ? _buildSettingsContent(context, user, character) : _buildNoCharacterScreen(),
-      loading: () => const Scaffold(
-        backgroundColor: Color(0xFF0f3460),
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.deepOrange),
-        ),
-      ),
-      error: (error, _) => Scaffold(
-        backgroundColor: const Color(0xFF0f3460),
-        body: Center(
-          child: Text(
-            'Error loading character: $error',
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      ),
-    );
+    return _buildSettingsContent(context, user, currentCharacter);
   }
 
   Widget _buildNoCharacterScreen() {
@@ -118,15 +113,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.deepOrange),
         ),
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {
-              _showPublicProfileDialog(character);
-            },
-            icon: const Icon(Icons.visibility, color: Colors.deepOrange),
-            tooltip: 'View Public Profile',
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -146,7 +132,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     'Change Avatar',
                     'Update your profile picture',
                     Icons.photo_camera,
-                    () => _showAvatarChangeDialog(),
+                    () => _showAvatarChangeDialog(character),
                   ),
                   _buildSettingTile(
                     'Change Gender',
@@ -197,7 +183,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Icons.people,
                 [
                   _buildSettingTile(
-                    'Marriage Proposal',
+                    character.marriedTo != null ? 'Divorce' : 'Marriage Proposal',
                     character.marriedTo != null 
                         ? 'Divorce (costs 2000 Ryo)' 
                         : 'Propose to another player',
@@ -224,22 +210,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Privacy Settings
+              // Display Settings
               _buildSettingsSection(
-                'Privacy & Display',
-                Icons.security,
+                'Display & Customization',
+                Icons.badge,
                 [
-                  _buildSettingTile(
-                    'Profile Visibility',
-                    'Control who can view your profile',
-                    Icons.visibility,
-                    () => _showPrivacyDialog(),
-                  ),
                   _buildSettingTile(
                     'Display Name',
                     'Set a custom display name',
                     Icons.badge,
-                    () => _showDisplayNameDialog(),
+                    () => _showDisplayNameDialog(character),
                   ),
                 ],
               ),
@@ -281,25 +261,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.deepOrange.withValues(alpha: 0.3),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.deepOrange,
-            backgroundImage: character.avatarUrl != null ? NetworkImage(character.avatarUrl!) : null,
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.deepOrange,
+              borderRadius: BorderRadius.circular(12),
+              image: character.avatarUrl != null 
+                  ? DecorationImage(
+                      image: NetworkImage(character.avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
             child: character.avatarUrl == null
-                ? Text(
-                    character.name.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
+                ? Center(
+                    child: Text(
+                      character.name.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
                     ),
                   )
                 : null,
@@ -313,40 +318,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   character.name,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  '${character.ninjaRank} • Level ${character.level}',
+                  '${character.ninjaRank} • ${character.village}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  '${character.village} Village',
-                  style: TextStyle(
-                    color: Colors.deepOrange.withValues(alpha: 0.8),
+                  'Level ${character.level} • ${_formatNumber(character.ryoOnHand)} Ryo',
+                  style: const TextStyle(
+                    color: Colors.deepOrange,
                     fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '${character.ryoOnHand} Ryo',
-              style: const TextStyle(
-                color: Colors.green,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ],
@@ -357,13 +350,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildSettingsSection(String title, IconData icon, List<Widget> children, {bool isDestructive = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDestructive 
               ? Colors.red.withValues(alpha: 0.3)
               : Colors.deepOrange.withValues(alpha: 0.3),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,9 +378,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDestructive
-                  ? Colors.red.withValues(alpha: 0.2)
-                  : Colors.deepOrange.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  isDestructive
+                      ? Colors.red.withValues(alpha: 0.3)
+                      : Colors.deepOrange.withValues(alpha: 0.3),
+                  isDestructive
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : Colors.deepOrange.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -384,6 +398,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Icon(
                   icon,
                   color: isDestructive ? Colors.red : Colors.deepOrange,
+                  size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -434,6 +449,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? Colors.red.withValues(alpha: enabled ? 0.3 : 0.1)
                   : Colors.deepOrange.withValues(alpha: enabled ? 0.2 : 0.1),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -498,70 +520,424 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // Dialog methods (placeholder implementations)
-  void _showPublicProfileDialog(Character character) {
-    // TODO: Show public profile view dialog
-    _showInfoDialog('Public Profile', 'This feature will show how your profile appears to other players.');
-  }
-
-  void _showAvatarChangeDialog() {
-    // TODO: Implement avatar selection
-    _showInfoDialog('Change Avatar', 'This feature will allow you to upload or select a new avatar.');
+  // Dialog methods with working functionality
+  void _showAvatarChangeDialog(Character character) {
+    showDialog(
+      context: context,
+      builder: (context) => AvatarChangeDialog(
+        character: character,
+        onAvatarChanged: (avatarUrl) => _updateAvatar(character, avatarUrl),
+      ),
+    );
   }
 
   void _showGenderChangeDialog(Character character) {
-    // TODO: Implement gender selection
-    _showInfoDialog('Change Gender', 'This feature will allow you to change your character\'s gender.');
+    final availableGenders = ['Male', 'Female', 'Other', 'Unknown'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Change Gender',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Select your character\'s gender:',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            ...availableGenders.map((gender) => ListTile(
+              title: Text(
+                gender,
+                style: TextStyle(
+                  color: character.gender == gender ? Colors.deepOrange : Colors.white,
+                  fontWeight: character.gender == gender ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              trailing: character.gender == gender 
+                  ? const Icon(Icons.check, color: Colors.deepOrange)
+                  : null,
+              onTap: () => _updateGender(character, gender),
+            )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showNameChangeDialog(Character character) {
-    // TODO: Implement name change with Ryo cost
-    _showInfoDialog('Change Name', 'This feature will allow you to change your character name for 1000 Ryo.');
+    _nameController.text = character.name;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Change Character Name',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Current name: ${character.name}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Cost: 1000 Ryo',
+              style: const TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'New Name',
+                labelStyle: const TextStyle(color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              final newName = _nameController.text.trim();
+              if (newName.isNotEmpty && newName != character.name) {
+                Navigator.of(context).pop();
+                _updateName(character, newName);
+              }
+            },
+            child: const Text('Confirm', style: TextStyle(color: Colors.deepOrange)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showStatResetDialog(Character character) {
-    // TODO: Implement stat reset with confirmation
-    _showInfoDialog('Stat Reset', 'This feature will reset all your character stats for 5000 Ryo.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Reset Character Stats',
+          style: TextStyle(color: Colors.red),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This will reset ALL your character stats to their starting values.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Cost: 5000 Ryo',
+              style: const TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This action cannot be undone!',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _resetStats(character);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Reset Stats'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showElementRerollDialog(Character character) {
-    // TODO: Implement element reroll
-    _showInfoDialog('Element Re-roll', 'This feature will allow you to change your elemental affinity for 10000 Ryo.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Reroll Elements',
+          style: TextStyle(color: Colors.orange),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.shuffle,
+              color: Colors.orange,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Current elements: ${character.elements.join(', ')}',
+              style: const TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This will give you a completely new random element.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Cost: 10000 Ryo',
+              style: const TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This action cannot be undone!',
+              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _rerollElements(character);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('Reroll Elements'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showMarriageDialog(Character character) {
-    // TODO: Implement marriage proposal system
-    _showInfoDialog('Marriage', 'This feature will allow you to propose to other players.');
+    _showInfoDialog(
+      'Marriage System',
+      'The marriage system is coming soon! You will be able to propose to other players and form special bonds.',
+    );
   }
 
   void _showDivorceDialog(Character character) {
-    // TODO: Implement divorce system
-    _showInfoDialog('Divorce', 'This feature will allow you to divorce your current spouse for 2000 Ryo.');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Divorce',
+          style: TextStyle(color: Colors.red),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.heart_broken,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Are you sure you want to divorce ${character.marriedTo}?',
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Cost: 2000 Ryo',
+              style: const TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This action cannot be undone!',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _divorce(character);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Divorce'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showMentorshipDialog(Character character) {
-    // TODO: Implement sensei/student management
-    _showInfoDialog('Mentorship', 'This feature will allow you to manage sensei/student relationships.');
+    _showInfoDialog(
+      'Mentorship System',
+      'The mentorship system is coming soon! Jounin+ players will be able to mentor Genin players for stat growth and social bonds.',
+    );
   }
 
-  void _showPrivacyDialog() {
-    // TODO: Implement privacy settings
-    _showInfoDialog('Privacy Settings', 'This feature will allow you to control profile visibility.');
-  }
-
-  void _showDisplayNameDialog() {
-    // TODO: Implement display name change
-    _showInfoDialog('Display Name', 'This feature will allow you to set a custom display name.');
+  void _showDisplayNameDialog(Character character) {
+    _displayNameController.text = character.name;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Set Display Name',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Set a custom display name that other players will see:',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _displayNameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Display Name',
+                labelStyle: const TextStyle(color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              final displayName = _displayNameController.text.trim();
+              if (displayName.isNotEmpty) {
+                Navigator.of(context).pop();
+                _updateDisplayName(character, displayName);
+              }
+            },
+            child: const Text('Set', style: TextStyle(color: Colors.deepOrange)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDeleteCharacterDialog(Character character) {
-    // TODO: Implement character deletion with strong confirmation
-    _showInfoDialog('Delete Character', 'This feature will permanently delete your character. This action cannot be undone!');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Delete Character',
+          style: TextStyle(color: Colors.red),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.delete_forever,
+              color: Colors.red,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This will PERMANENTLY delete your character and all progress.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'This action cannot be undone!',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteCharacter(character);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete Character'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showResetAccountDialog() {
-    // TODO: Implement account reset with strong confirmation
-    _showInfoDialog('Reset Account', 'This feature will reset all your progress. This action cannot be undone!');
+    _showInfoDialog(
+      'Reset Account',
+      'The account reset feature is coming soon! This will allow you to reset all progress and start fresh.',
+    );
   }
 
   void _showInfoDialog(String title, String content) {
@@ -587,6 +963,186 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // Action methods using the character update provider
+  Future<void> _updateAvatar(Character character, String? newAvatarUrl) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.updateCharacterAvatar(newAvatarUrl);
+      if (success) {
+        // Add to avatar history if it's a valid URL
+        if (newAvatarUrl != null) {
+          final avatarService = AvatarService();
+          await avatarService.addAvatarToHistory(newAvatarUrl);
+        }
+        
+        // Invalidate the character provider to refresh the UI
+        ref.invalidate(characterProvider(character.id));
+        
+        _showSuccessSnackbar('Avatar updated successfully!');
+      } else {
+        _showErrorSnackbar('Failed to update avatar');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Error updating avatar: ${e.toString()}');
+    }
+  }
+
+  Future<void> _updateGender(Character character, String newGender) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.updateCharacterGender(newGender);
+      if (success && mounted) {
+        Navigator.of(context).pop();
+        _showSuccessSnackbar('Gender updated successfully!');
+      } else if (mounted) {
+        _showErrorSnackbar('Failed to update gender');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error updating gender: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _updateName(Character character, String newName) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.updateCharacterName(newName);
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Name updated successfully!');
+        } else {
+          _showErrorSnackbar('Insufficient Ryo or failed to update name');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error updating name: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _resetStats(Character character) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.resetCharacterStats();
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Stats reset successfully!');
+        } else {
+          _showErrorSnackbar('Insufficient Ryo or failed to reset stats');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error resetting stats: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _rerollElements(Character character) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.rerollCharacterElements();
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Elements rerolled successfully!');
+        } else {
+          _showErrorSnackbar('Insufficient Ryo or failed to reroll elements');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error rerolling elements: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _divorce(Character character) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.divorceCharacter();
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Divorce completed successfully!');
+        } else {
+          _showErrorSnackbar('Insufficient Ryo or failed to complete divorce');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error completing divorce: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _updateDisplayName(Character character, String displayName) async {
+    // For now, this just updates the regular name
+    // In the future, this could be a separate display name field
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.updateCharacterName(displayName);
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Display name updated successfully!');
+        } else {
+          _showErrorSnackbar('Insufficient Ryo or failed to update display name');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error updating display name: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _deleteCharacter(Character character) async {
+    try {
+      final characterUpdateNotifier = ref.read(characterUpdateNotifierProvider(character.id).notifier);
+      final success = await characterUpdateNotifier.deleteCharacter();
+      if (mounted) {
+        if (success) {
+          _showSuccessSnackbar('Character deleted successfully!');
+          // Navigate back to character selection or main screen
+          context.pop();
+        } else {
+          _showErrorSnackbar('Failed to delete character');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackbar('Error deleting character: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match match) => '${match[1]},',
     );
   }
 }

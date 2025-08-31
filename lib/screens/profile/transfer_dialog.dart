@@ -314,16 +314,27 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.deepOrange,
-                backgroundImage: player.avatarUrl != null ? NetworkImage(player.avatarUrl!) : null,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange,
+                  borderRadius: BorderRadius.circular(8),
+                  image: player.avatarUrl != null 
+                      ? DecorationImage(
+                          image: NetworkImage(player.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
                 child: player.avatarUrl == null
-                    ? Text(
-                        player.name.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                    ? Center(
+                        child: Text(
+                          player.name.substring(0, 1).toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       )
                     : null,

@@ -109,174 +109,320 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Enhanced Header with gradient background
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1a1a2e),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1a1a2e),
+                    const Color(0xFF16213e),
+                    const Color(0xFF0f3460),
+                  ],
+                ),
                 border: Border(
                   bottom: BorderSide(
-                    color: Colors.deepOrange.withValues(alpha: 0.3),
-                    width: 1,
+                    color: Colors.deepOrange.withValues(alpha: 0.4),
+                    width: 2,
                   ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.deepOrange,
-                    backgroundImage: character.avatarUrl != null ? NetworkImage(character.avatarUrl!) : null,
-                    child: character.avatarUrl == null
-                        ? Text(
-                            character.name.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
-                          )
-                        : null,
+                  // Enhanced Avatar with gradient border
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.deepOrange,
+                          Colors.orange,
+                          Colors.deepOrange,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepOrange.withValues(alpha: 0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        image: character.avatarUrl != null 
+                            ? DecorationImage(
+                                image: NetworkImage(character.avatarUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: character.avatarUrl == null
+                          ? Container(
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF16213e),
+                                borderRadius: BorderRadius.all(Radius.circular(16)),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  character.name.substring(0, 1).toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 40,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text(
-                              character.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Text(
+                                character.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black26,
+                                      offset: Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.deepOrange.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.deepOrange,
+                                    Colors.orange,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.deepOrange.withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: Text(
                                 'Lv.${character.level}',
                                 style: const TextStyle(
-                                  color: Colors.deepOrange,
-                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            Text(
-                              '${character.ninjaRank} • ${character.village}',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 14,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.withValues(alpha: 0.4)),
+                              ),
+                              child: Text(
+                                character.ninjaRank,
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
+                              ),
+                              child: Text(
+                                character.village,
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             if (character.marriedTo != null) ...[
                               const SizedBox(width: 8),
-                              const Icon(
-                                Icons.favorite,
-                                color: Colors.pink,
-                                size: 16,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.pink.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.pink.withValues(alpha: 0.4)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.favorite,
+                                      color: Colors.pink,
+                                      size: 12,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Married',
+                                      style: TextStyle(
+                                        color: Colors.pink,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ],
                         ),
-                        if (character.bloodline != null)
+                        if (character.bloodline != null) ...[
+                          const SizedBox(height: 8),
                           Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              character.bloodline!,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.red.withValues(alpha: 0.3),
+                                  Colors.red.withValues(alpha: 0.1),
+                                ],
                               ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.bloodtype,
+                                  color: Colors.red,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  character.bloodline!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      context.push('/profile/settings');
-                    },
-                    icon: const Icon(
-                      Icons.settings,
-                      color: Colors.deepOrange,
-                      size: 28,
+                  // Enhanced Settings Button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrange.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.deepOrange.withValues(alpha: 0.4)),
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        context.push('/profile/settings');
+                      },
+                      icon: const Icon(
+                        Icons.settings,
+                        color: Colors.deepOrange,
+                        size: 28,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             
-            // Profile Content
+            // Profile Content with improved spacing
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Character Overview
+                    // Character Overview with enhanced design
                     _buildCharacterOverview(character),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
-                    // Stats Section
+                    // Stats Section with better layout
                     Row(
                       children: [
                         Expanded(
                           child: _buildStatsCard('Core Stats', [
-                            _buildStatRow('Strength', character.strength, 250000),
-                            _buildStatRow('Intelligence', character.intelligence, 250000),
-                            _buildStatRow('Speed', character.speed, 250000),
-                            _buildStatRow('Defense', character.defense, 250000),
-                            _buildStatRow('Willpower', character.willpower, 250000),
+                            _buildStatRow('Strength', character.strength, 250000, Icons.fitness_center),
+                            _buildStatRow('Intelligence', character.intelligence, 250000, Icons.psychology),
+                            _buildStatRow('Speed', character.speed, 250000, Icons.speed),
+                            _buildStatRow('Defense', character.defense, 250000, Icons.shield),
+                            _buildStatRow('Willpower', character.willpower, 250000, Icons.psychology_outlined),
                           ]),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildStatsCard('Combat Stats', [
-                            _buildStatRow('Bukijutsu', character.bukijutsu, 500000),
-                            _buildStatRow('Ninjutsu', character.ninjutsu, 500000),
-                            _buildStatRow('Taijutsu', character.taijutsu, 500000),
-                            _buildStatRow('Genjutsu', character.genjutsu, 500000),
+                            _buildStatRow('Bukijutsu', character.bukijutsu, 500000, Icons.sports_kabaddi),
+                            _buildStatRow('Ninjutsu', character.ninjutsu, 500000, Icons.local_fire_department),
+                            _buildStatRow('Taijutsu', character.taijutsu, 500000, Icons.sports_martial_arts),
+                            _buildStatRow('Genjutsu', character.genjutsu, 500000, Icons.visibility),
                           ]),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // Medical Rank Section
                     _buildMedicalRankCard(character),
-                    const SizedBox(height: 16),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
-                    // Resources & Records
+                    // Resources & Records with enhanced design
                     Row(
                       children: [
                         Expanded(
                           child: _buildResourcesCard(character),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildRecordsCard(character),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // Reputation & Elements
                     Row(
@@ -284,13 +430,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Expanded(
                           child: _buildReputationCard(character),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildElementsCard(character),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // Relationships & Logbook
                     Row(
@@ -298,13 +444,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Expanded(
                           child: _buildRelationshipsCard(character),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: _buildLogbookCard(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -321,13 +467,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+            const Color(0xFF0f3460),
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -337,74 +499,183 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Experience Progress',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.deepOrange.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.trending_up,
+                            color: Colors.deepOrange,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Experience Progress',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 12),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: xpProgress,
-                        backgroundColor: Colors.black.withValues(alpha: 0.3),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
-                        minHeight: 8,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 12,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: LinearProgressIndicator(
+                          value: xpProgress,
+                          backgroundColor: Colors.black.withValues(alpha: 0.4),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
+                          minHeight: 12,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${character.experience} / $xpNeeded XP',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '${character.experience}',
+                          style: const TextStyle(
+                            color: Colors.deepOrange,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          ' / $xpNeeded XP',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.deepOrange.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${(xpProgress * 100).toStringAsFixed(1)}%',
+                            style: const TextStyle(
+                              color: Colors.deepOrange,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               if (character.canAdvanceRank)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
-                  ),
-                  child: const Text(
-                    'Rank Up Available!',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.withValues(alpha: 0.3),
+                        Colors.green.withValues(alpha: 0.1),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.6)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.star,
+                        color: Colors.green,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Rank Up\nAvailable!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
           ),
           if (character.marriedTo != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.pink.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.pink.withValues(alpha: 0.3)),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.pink.withValues(alpha: 0.2),
+                    Colors.pink.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.pink.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.favorite, color: Colors.pink, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Married to ${character.marriedTo}',
-                    style: const TextStyle(
-                      color: Colors.pink,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.favorite, color: Colors.pink, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Married to',
+                          style: TextStyle(
+                            color: Colors.pink.withValues(alpha: 0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          character.marriedTo!,
+                          style: const TextStyle(
+                            color: Colors.pink,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -419,37 +690,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildStatsCard(String title, List<Widget> stats) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.deepOrange.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.deepOrange.withValues(alpha: 0.3),
+                  Colors.deepOrange.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
             child: Row(
               children: [
-                Icon(
-                  title == 'Core Stats' ? Icons.fitness_center : Icons.sports_kabaddi,
-                  color: Colors.deepOrange,
-                  size: 16,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    title == 'Core Stats' ? Icons.fitness_center : Icons.sports_kabaddi,
+                    color: Colors.deepOrange,
+                    size: 18,
+                  ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 10),
                 Text(
                   title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -457,7 +755,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Column(children: stats),
           ),
         ],
@@ -465,44 +763,80 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildStatRow(String name, int value, int max) {
+  Widget _buildStatRow(String name, int value, int max, IconData icon) {
     final percentage = value / max;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.deepOrange,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   name,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              Text(
-                _formatNumber(value),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _formatNumber(value),
+                  style: const TextStyle(
+                    color: Colors.deepOrange,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: percentage,
-              backgroundColor: Colors.black.withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                percentage < 0.5 ? Colors.orange : Colors.green,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-              minHeight: 6,
+              child: LinearProgressIndicator(
+                value: percentage,
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  percentage < 0.3 ? Colors.red : 
+                  percentage < 0.6 ? Colors.orange : 
+                  percentage < 0.8 ? Colors.yellow : Colors.green,
+                ),
+                minHeight: 8,
+              ),
             ),
           ),
         ],
@@ -513,33 +847,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildResourcesCard(Character character) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.blue.withValues(alpha: 0.3),
+                  Colors.blue.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.inventory, color: Colors.blue, size: 16),
-                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.inventory, color: Colors.blue, size: 18),
+                ),
+                const SizedBox(width: 10),
                 const Text(
                   'Resources',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -547,22 +908,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 InkWell(
                   onTap: () => _showBankingDialog(character),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.green.withValues(alpha: 0.3),
+                          Colors.green.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.account_balance, color: Colors.green, size: 12),
-                        SizedBox(width: 4),
+                        Icon(Icons.account_balance, color: Colors.green, size: 14),
+                        SizedBox(width: 6),
                         Text(
                           'Bank',
                           style: TextStyle(
                             color: Colors.green,
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -586,12 +959,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _buildRyoRow('On Hand', character.ryoOnHand, Colors.orange),
                 _buildRyoRow('In Bank', character.ryoBanked, Colors.green),
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.deepOrange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepOrange.withValues(alpha: 0.2),
+                        Colors.deepOrange.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.deepOrange.withValues(alpha: 0.4)),
                   ),
-                  child: _buildInfoRow('Total Wealth', '${_formatNumber(character.ryoOnHand + character.ryoBanked)} Ryo'),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.savings,
+                          color: Colors.deepOrange,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Total Wealth',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${_formatNumber(character.ryoOnHand + character.ryoBanked)} Ryo',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -603,30 +1023,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildRyoRow(String label, int amount, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            label == 'On Hand' ? Icons.account_balance_wallet : Icons.account_balance,
-            color: color,
-            size: 14,
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              label == 'On Hand' ? Icons.account_balance_wallet : Icons.account_balance,
+              color: color,
+              size: 14,
+            ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Text(
-            '${_formatNumber(amount)} Ryo',
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '${_formatNumber(amount)} Ryo',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -637,38 +1072,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildResourceBar(String name, int current, int max, Color color) {
     final percentage = current / max;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(
+                  name == 'HP' ? Icons.favorite : name == 'CP' ? Icons.water_drop : Icons.fitness_center,
+                  color: color,
+                  size: 12,
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
                 name,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
-              Text(
-                '$current/$max',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '$current/$max',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: percentage,
-              backgroundColor: Colors.black.withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: LinearProgressIndicator(
+                value: percentage,
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                minHeight: 10,
+              ),
             ),
           ),
         ],
@@ -677,64 +1146,92 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildRegenerationRates(Character character) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.deepOrange.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.deepOrange.withValues(alpha: 0.1),
+            Colors.deepOrange.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.deepOrange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Icon(Icons.healing, color: Colors.deepOrange, size: 14),
-              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.healing, color: Colors.deepOrange, size: 16),
+              ),
+              const SizedBox(width: 8),
               Text(
                 'Regeneration Rates (per 30s)',
                 style: TextStyle(
                   color: Colors.deepOrange,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 6),
-        _buildRegenRateRow('HP', character.hpRegenRate, Colors.red),
-        _buildRegenRateRow('CP', character.cpRegenRate, Colors.blue),
-        _buildRegenRateRow('SP', character.spRegenRate, Colors.green),
-      ],
+          const SizedBox(height: 8),
+          _buildRegenRateRow('HP', character.hpRegenRate, Colors.red),
+          _buildRegenRateRow('CP', character.cpRegenRate, Colors.blue),
+          _buildRegenRateRow('SP', character.spRegenRate, Colors.green),
+        ],
+      ),
     );
   }
 
   Widget _buildRegenRateRow(String name, int rate, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            name == 'HP' ? Icons.favorite : name == 'CP' ? Icons.water_drop : Icons.fitness_center,
-            color: color,
-            size: 12,
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              name == 'HP' ? Icons.favorite : name == 'CP' ? Icons.water_drop : Icons.fitness_center,
+              color: color,
+              size: 12,
+            ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               '$name Regen',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Text(
-            '+${_formatNumber(rate)}',
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '+${_formatNumber(rate)}',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -748,33 +1245,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.purple.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.purple.withValues(alpha: 0.3),
+                  Colors.purple.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.emoji_events, color: Colors.purple, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.emoji_events, color: Colors.purple, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Battle Records',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -804,24 +1328,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildRecordRow(String label, dynamic value, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
             child: Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              value.toString(),
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -832,33 +1364,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildReputationCard(Character character) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.amber.withValues(alpha: 0.3),
+                  Colors.amber.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.star, color: Colors.amber, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.star, color: Colors.amber, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Reputation',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -890,29 +1449,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text(
               name,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const Spacer(),
-            Text(
-              value.toString(),
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                value.toString(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: percentage.clamp(0.0, 1.0),
-            backgroundColor: Colors.black.withValues(alpha: 0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 6,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            height: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: LinearProgressIndicator(
+              value: percentage.clamp(0.0, 1.0),
+              backgroundColor: Colors.black.withValues(alpha: 0.4),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 10,
+            ),
           ),
         ),
       ],
@@ -922,33 +1502,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildElementsCard(Character character) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.cyan.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.cyan.withValues(alpha: 0.3),
+                  Colors.cyan.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.local_fire_department, color: Colors.cyan, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.cyan.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.local_fire_department, color: Colors.cyan, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Elements',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -990,19 +1597,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildElementChip(String element) {
     final color = _getElementColor(element);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        element,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.3),
+            color.withValues(alpha: 0.1),
+          ],
         ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _getElementIcon(element),
+            color: color,
+            size: 14,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            element,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1014,33 +1644,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.orange.withValues(alpha: 0.3),
+                  Colors.orange.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.local_hospital, color: Colors.orange, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.local_hospital, color: Colors.orange, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Medical Rank',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1131,45 +1788,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildMedicalStatInfo(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 10,
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.orange,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.orange,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildBloodlineChip(String bloodline) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+        gradient: LinearGradient(
+          colors: [
+            Colors.red.withValues(alpha: 0.3),
+            Colors.red.withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bloodtype, color: Colors.red, size: 12),
-          const SizedBox(width: 4),
+          const Icon(Icons.bloodtype, color: Colors.red, size: 14),
+          const SizedBox(width: 6),
           Text(
             bloodline,
             style: const TextStyle(
               color: Colors.red,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1195,36 +1874,80 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  IconData _getElementIcon(String element) {
+    switch (element.toLowerCase()) {
+      case 'fire':
+        return Icons.local_fire_department;
+      case 'water':
+        return Icons.water_drop;
+      case 'earth':
+        return Icons.landscape;
+      case 'wind':
+        return Icons.air;
+      case 'lightning':
+        return Icons.flash_on;
+      default:
+        return Icons.circle;
+    }
+  }
+
   Widget _buildRelationshipsCard(Character character) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.pink.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.pink.withValues(alpha: 0.3),
+                  Colors.pink.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.people, color: Colors.pink, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.pink.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.people, color: Colors.pink, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Relationships',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1253,33 +1976,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildLogbookCard() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16213e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.deepOrange.withValues(alpha: 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF16213e),
+            const Color(0xFF1a1a2e),
+          ],
         ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.deepOrange.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.withValues(alpha: 0.3),
+                  Colors.green.withValues(alpha: 0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.book, color: Colors.green, size: 16),
-                SizedBox(width: 6),
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.book, color: Colors.green, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Logbook',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1300,18 +2050,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     // TODO: Show full logbook
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'View Full Logbook',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.green.withValues(alpha: 0.3),
+                          Colors.green.withValues(alpha: 0.1),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.visibility,
+                          color: Colors.green,
+                          size: 14,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'View Full Logbook',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1334,7 +2108,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Expanded(
@@ -1342,19 +2116,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.deepOrange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.deepOrange.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -1372,62 +2155,82 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: const Color(0xFF16213e),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           width: double.maxFinite,
           constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.account_balance, color: Colors.green),
-                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.account_balance, color: Colors.green, size: 24),
+                  ),
+                  const SizedBox(width: 12),
                   const Text(
                     'Banking',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: Colors.white),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.red, size: 20),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               
               // Current Balance
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.3),
+                      Colors.black.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.deepOrange.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   children: [
                     _buildBalanceRow('On Hand', character.ryoOnHand, Icons.account_balance_wallet, Colors.orange),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     _buildBalanceRow('In Bank', character.ryoBanked, Icons.account_balance, Colors.green),
-                    const Divider(color: Colors.white24),
+                    const Divider(color: Colors.white24, thickness: 1),
+                    const SizedBox(height: 8),
                     _buildBalanceRow('Total', character.ryoOnHand + character.ryoBanked, Icons.savings, Colors.deepOrange),
                   ],
                 ),
               ),
               
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               
               // Action Buttons
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                   childAspectRatio: 1.2,
                   children: [
                     _buildBankingAction(
@@ -1471,23 +2274,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildBalanceRow(String label, int amount, IconData icon, Color color) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        Text(
-          '${_formatNumber(amount)} Ryo',
-          style: TextStyle(
-            color: color,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '${_formatNumber(amount)} Ryo',
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -1497,32 +2315,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildBankingAction(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          gradient: LinearGradient(
+            colors: [
+              color.withValues(alpha: 0.2),
+              color.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(height: 12),
             Text(
               title,
               style: TextStyle(
                 color: color,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 11,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1681,3 +2519,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+
+
+
+
+
