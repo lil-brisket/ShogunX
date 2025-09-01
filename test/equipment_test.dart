@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/models.dart';
-import '../lib/services/equipment_service.dart';
+import 'package:ninja_world_mmo/models/models.dart';
+import 'package:ninja_world_mmo/services/equipment_service.dart';
 
 void main() {
   group('Equipment System Tests', () {

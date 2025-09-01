@@ -605,10 +605,17 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
           if (result.success && result.updatedCharacter != null) {
             // Update the game state
             ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
+            
+            // Check if widget is still mounted before using context
+            if (!mounted) return;
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(result.message)),
             );
           } else {
+            // Check if widget is still mounted before using context
+            if (!mounted) return;
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(result.message),
@@ -622,10 +629,17 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
           if (result.success && result.updatedCharacter != null) {
             // Update the game state
             ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
+            
+            // Check if widget is still mounted before using context
+            if (!mounted) return;
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(result.message)),
             );
           } else {
+            // Check if widget is still mounted before using context
+            if (!mounted) return;
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(result.message),
@@ -734,7 +748,6 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
     final currentCharacter = ref.watch(gameStateProvider).selectedCharacter;
     if (currentCharacter == null) return const SizedBox.shrink();
     
-    final equipmentNotifier = ref.read(equipmentProvider.notifier);
     final equipmentSlot = _getSlotFromName(slotName);
     
     return InkWell(
@@ -916,22 +929,29 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
-                      Navigator.of(context).pop();
-                                              final result = await equipmentNotifier.unequipItem(character, slot);
-                        if (result.success && result.updatedCharacter != null) {
-                          // Update the game state
-                          ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(result.message)),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(result.message),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                                            Navigator.of(context).pop();
+                      final result = await equipmentNotifier.unequipItem(character, slot);
+                      if (result.success && result.updatedCharacter != null) {
+                        // Update the game state
+                        ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
+                        
+                        // Check if widget is still mounted before using context
+                        if (!mounted) return;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result.message)),
+                        );
+                      } else {
+                        // Check if widget is still mounted before using context
+                        if (!mounted) return;
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
@@ -957,10 +977,17 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
                       if (result.success && result.updatedCharacter != null) {
                         // Update the game state
                         ref.read(gameStateProvider.notifier).updateCharacter(result.updatedCharacter!);
+                        
+                        // Check if widget is still mounted before using context
+                        if (!mounted) return;
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(result.message)),
                         );
                       } else {
+                        // Check if widget is still mounted before using context
+                        if (!mounted) return;
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(result.message),
@@ -1005,7 +1032,7 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
                       ),
                     ),
                   ),
-                )).toList(),
+                )),
               ] else ...[
                 const Text(
                   'No equippable items available',

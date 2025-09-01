@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../models/training_session.dart';
 import '../models/character.dart';
 import '../services/training_service.dart';
 import 'auth_provider.dart';
+import '../utils/logger.dart';
 
 // Provider for active training sessions
 final activeTrainingSessionsProvider = StateNotifierProvider<ActiveTrainingSessionsNotifier, List<TrainingSession>>((ref) {
@@ -17,24 +19,51 @@ final completedTrainingSessionsProvider = StateNotifierProvider<CompletedTrainin
 // Notifier for active training sessions
 class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>> {
   ActiveTrainingSessionsNotifier() : super([]);
+  
+  Timer? _progressTimer;
+
+  @override
+  void dispose() {
+    _progressTimer?.cancel();
+    super.dispose();
+  }
+
+  // Start progress timer to update training sessions in real-time
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // Force rebuild of training sessions to update progress
+      if (state.isNotEmpty) {
+        state = [...state]; // Trigger rebuild
+      } else {
+        timer.cancel();
+      }
+    });
+  }
 
   // Load existing training sessions from Firebase
   Future<void> loadExistingSessions(String characterId, WidgetRef ref) async {
     try {
       final sessions = await ref.read(authStateProvider.notifier).authService.getCharacterTrainingSessions(characterId);
       state = sessions;
-      print('✅ Loaded ${sessions.length} existing training sessions for character: $characterId');
-    } catch (e) {
-      print('❌ Failed to load training sessions: $e');
-      state = [];
-    }
+      
+      // Start progress timer if there are active sessions
+      if (sessions.isNotEmpty) {
+        _startProgressTimer();
+      }
+      
+             Logger.success('Loaded ${sessions.length} existing training sessions for character: $characterId');
+     } catch (e) {
+       Logger.error('Failed to load training sessions: $e');
+       state = [];
+     }
   }
 
   // Clear all training sessions (for logout)
   void clearAllSessions() {
-    state = [];
-    print('✅ Cleared all training sessions');
-  }
+         state = [];
+     Logger.success('Cleared all training sessions');
+   }
 
   // Save all active training sessions to Firebase
   Future<void> saveAllSessionsToFirebase(WidgetRef ref) async {
@@ -42,10 +71,10 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
       for (final session in state) {
         await ref.read(authStateProvider.notifier).authService.saveTrainingSession(session);
       }
-      print('✅ Saved ${state.length} training sessions to Firebase');
-    } catch (e) {
-      print('❌ Failed to save training sessions: $e');
-    }
+             Logger.success('Saved ${state.length} training sessions to Firebase');
+     } catch (e) {
+       Logger.error('Failed to save training sessions: $e');
+     }
   }
 
   // Start a new training session
@@ -67,10 +96,13 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     final newSession = TrainingService.startTraining(character, statType);
     state = [...state, newSession];
     
-    // Save to Firebase
-    await ref.read(authStateProvider.notifier).authService.saveTrainingSession(newSession);
-    print('✅ Training session started and saved to Firebase: ${newSession.statType}');
-  }
+    // Start progress timer for real-time updates
+    _startProgressTimer();
+    
+         // Save to Firebase
+     await ref.read(authStateProvider.notifier).authService.saveTrainingSession(newSession);
+     Logger.success('Training session started and saved to Firebase: ${newSession.statType}');
+   }
 
   // Complete a training session
   TrainingSession? completeTraining(String sessionId) {
@@ -99,10 +131,10 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     final gameState = ref.read(gameStateProvider);
     final currentCharacter = gameState.selectedCharacter;
     
-    if (currentCharacter == null || currentCharacter.id != completedSession.characterId) {
-      print('❌ Character not found for training completion');
-      return;
-    }
+         if (currentCharacter == null || currentCharacter.id != completedSession.characterId) {
+       Logger.error('Character not found for training completion');
+       return;
+     }
 
     // Update character stats based on training completion
     final updatedCharacter = _updateCharacterStatFromTraining(
@@ -114,11 +146,11 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     // Save to Firebase and update local state
     await ref.read(authStateProvider.notifier).updateCharacter(updatedCharacter, ref);
     
-    // Delete training session from Firebase
-    await ref.read(authStateProvider.notifier).authService.deleteTrainingSession(sessionId);
-    
-    print('✅ Training completed and character updated: ${completedSession.statType} +${completedSession.actualGain ?? 0}');
-  }
+         // Delete training session from Firebase
+     await ref.read(authStateProvider.notifier).authService.deleteTrainingSession(sessionId);
+     
+     Logger.success('Training completed and character updated: ${completedSession.statType} +${completedSession.actualGain ?? 0}');
+   }
 
   Character _updateCharacterStatFromTraining(Character character, String statType, int statGain) {
     switch (statType) {

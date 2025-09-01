@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/models.dart';
-import '../models/training_session.dart';
+import '../utils/logger.dart';
 
 class FirebaseAuthService {
   static final FirebaseAuthService _instance = FirebaseAuthService._internal();
@@ -22,11 +22,11 @@ class FirebaseAuthService {
     try {
       _auth = firebase_auth.FirebaseAuth.instance;
       _firestore = FirebaseFirestore.instance;
-    } catch (e) {
-      print('⚠️ Firebase not initialized yet: $e');
-      _auth = null;
-      _firestore = null;
-    }
+         } catch (e) {
+       Logger.warning('Firebase not initialized yet: $e');
+       _auth = null;
+       _firestore = null;
+     }
   }
 
   // Get auth instance with initialization check
@@ -117,12 +117,12 @@ class FirebaseAuthService {
       _currentUser = updatedUser;
       _isAuthenticated = true;
 
-      print('✅ User registered successfully: $username');
-      return true;
-    } catch (e) {
-      print('❌ Registration failed: $e');
-      return false;
-    }
+             Logger.success('User registered successfully: $username');
+       return true;
+     } catch (e) {
+       Logger.error('Registration failed: $e');
+       return false;
+     }
   }
 
   Future<bool> login(String username, String password) async {
@@ -157,12 +157,28 @@ class FirebaseAuthService {
         'lastActivity': DateTime.now(),
       });
 
-      print('✅ User logged in successfully: $username');
-      return true;
-    } catch (e) {
-      print('❌ Login failed: $e');
-      return false;
-    }
+      // Ensure user has a character - create one if missing
+      if (_currentUser!.characterIds.isEmpty) {
+               Logger.warning('User has no characters, creating default character...');
+       final defaultCharacter = _createDefaultCharacter(_currentUser!.id, username, _currentUser!.lastVillage ?? 'Konoha');
+       await saveCharacter(defaultCharacter);
+       
+       // Update user with character reference
+       final updatedUser = _currentUser!.copyWith(
+         currentCharacterId: defaultCharacter.id,
+         characterIds: [defaultCharacter.id],
+       );
+       await updateUser(updatedUser);
+       _currentUser = updatedUser;
+       Logger.success('Default character created for user: $username');
+     }
+
+     Logger.success('User logged in successfully: $username');
+     return true;
+   } catch (e) {
+     Logger.error('Login failed: $e');
+     return false;
+   }
   }
 
   Future<void> logout() async {
@@ -170,10 +186,10 @@ class FirebaseAuthService {
       await auth.signOut();
       _currentUser = null;
       _isAuthenticated = false;
-      print('✅ User logged out successfully');
-    } catch (e) {
-      print('❌ Logout failed: $e');
-    }
+             Logger.success('User logged out successfully');
+     } catch (e) {
+       Logger.error('Logout failed: $e');
+     }
   }
 
   Character _createDefaultCharacter(String userId, String username, String village) {
@@ -253,47 +269,47 @@ class FirebaseAuthService {
           .map((doc) => Character.fromMap(doc.data()))
           .toList();
     } catch (e) {
-      print('❌ Failed to get user characters: $e');
-      return [];
-    }
+             Logger.error('Failed to get user characters: $e');
+       return [];
+     }
   }
 
   Future<void> updateUser(User user) async {
     try {
       await firestore.collection('users').doc(user.id).update(user.toMap());
       _currentUser = user;
-      print('✅ User updated successfully');
-    } catch (e) {
-      print('❌ Failed to update user: $e');
-    }
+             Logger.success('User updated successfully');
+     } catch (e) {
+       Logger.error('Failed to update user: $e');
+     }
   }
 
   Future<void> updateCharacter(Character character) async {
     try {
       await firestore.collection('characters').doc(character.id).update(character.toMap());
-      print('✅ Character updated successfully: ${character.name}');
-    } catch (e) {
-      print('❌ Failed to update character: $e');
-    }
+             Logger.success('Character updated successfully: ${character.name}');
+     } catch (e) {
+       Logger.error('Failed to update character: $e');
+     }
   }
 
   Future<void> saveCharacter(Character character) async {
     try {
       await firestore.collection('characters').doc(character.id).set(character.toMap());
-      print('✅ Character saved successfully: ${character.name}');
-    } catch (e) {
-      print('❌ Failed to save character: $e');
-    }
+             Logger.success('Character saved successfully: ${character.name}');
+     } catch (e) {
+       Logger.error('Failed to save character: $e');
+     }
   }
 
   // Save training session to Firebase
   Future<void> saveTrainingSession(TrainingSession session) async {
     try {
       await firestore.collection('training_sessions').doc(session.id).set(session.toMap());
-      print('✅ Training session saved successfully: ${session.id}');
-    } catch (e) {
-      print('❌ Failed to save training session: $e');
-    }
+             Logger.success('Training session saved successfully: ${session.id}');
+     } catch (e) {
+       Logger.error('Failed to save training session: $e');
+     }
   }
 
   // Load training sessions for a character
@@ -309,18 +325,18 @@ class FirebaseAuthService {
           .map((doc) => TrainingSession.fromMap(doc.data()))
           .toList();
     } catch (e) {
-      print('❌ Failed to get training sessions: $e');
-      return [];
-    }
+             Logger.error('Failed to get training sessions: $e');
+       return [];
+     }
   }
 
   // Delete training session from Firebase
   Future<void> deleteTrainingSession(String sessionId) async {
     try {
       await firestore.collection('training_sessions').doc(sessionId).delete();
-      print('✅ Training session deleted successfully: $sessionId');
-    } catch (e) {
-      print('❌ Failed to delete training session: $e');
-    }
+             Logger.success('Training session deleted successfully: $sessionId');
+     } catch (e) {
+       Logger.error('Failed to delete training session: $e');
+     }
   }
 }

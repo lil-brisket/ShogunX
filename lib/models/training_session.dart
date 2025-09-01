@@ -16,7 +16,7 @@ class TrainingSession {
   static const int xpPerSession = 25000;
   static const double baseRate = xpPerSession / maxSessionTime; // 0.87 XP/sec
   static const bool idleAllowed = true;
-  static const bool earlyCollection = false;
+  static const bool earlyCollection = true; // Changed to true to allow early redemption
 
   TrainingSession({
     required this.id,

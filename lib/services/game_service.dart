@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import 'hospital_service.dart';
+import 'character_persistence_service.dart';
 
 class GameService {
   static final GameService _instance = GameService._internal();
   factory GameService() => _instance;
   GameService._internal();
+
+  final CharacterPersistenceService _persistenceService = CharacterPersistenceService();
 
   // In-memory storage for demo purposes
   final Map<String, Character> _characters = {};
@@ -18,12 +21,43 @@ class GameService {
   Future<Character?> getCharacter(String characterId) async {
     await Future.delayed(const Duration(milliseconds: 100));
     
-    // If character doesn't exist, create a demo character
-    if (!_characters.containsKey(characterId)) {
-      _characters[characterId] = _createDemoCharacter(characterId);
+    // First check in-memory storage
+    if (_characters.containsKey(characterId)) {
+      return _characters[characterId];
     }
     
-    return _characters[characterId];
+    // If not in memory, try to load from persistent storage
+    final character = await _persistenceService.loadCharacter(characterId);
+    if (character != null) {
+      // Cache in memory for faster access
+      _characters[characterId] = character;
+      return character;
+    }
+    
+    // If character doesn't exist, return null
+    return null;
+  }
+
+  // Get character by user ID - this is the main method to use
+  Future<Character?> getCharacterByUserId(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // First check in-memory storage
+    final existingCharacter = _characters.values.where((char) => char.userId == userId).firstOrNull;
+    if (existingCharacter != null) {
+      return existingCharacter;
+    }
+    
+    // If not in memory, try to load from persistent storage
+    final character = await _persistenceService.loadCharacterByUserId(userId);
+    if (character != null) {
+      // Cache in memory for faster access
+      _characters[character.id] = character;
+      return character;
+    }
+    
+    // If no character exists for this user, return null
+    return null;
   }
 
   Character _createDemoCharacter(String characterId) {
@@ -102,12 +136,23 @@ class GameService {
 
   Future<List<Character>> getUserCharacters(String userId) async {
     await Future.delayed(const Duration(milliseconds: 200));
-    return _characters.values.where((char) => char.userId == userId).toList();
+    
+    final character = await getCharacterByUserId(userId);
+    if (character != null) {
+      return [character];
+    }
+    
+    return [];
   }
 
   Future<void> saveCharacter(Character character) async {
     await Future.delayed(const Duration(milliseconds: 150));
+    
+    // Save to in-memory storage
     _characters[character.id] = character;
+    
+    // Save to persistent storage
+    await _persistenceService.saveCharacter(character);
     
     // Check if character should be admitted to hospital
     if (character.currentHp <= 0) {
@@ -118,17 +163,35 @@ class GameService {
 
   Future<Character> createCharacter(Character character) async {
     await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Save to in-memory storage
     _characters[character.id] = character;
+    
+    // Save to persistent storage
+    await _persistenceService.saveCharacter(character);
+    
+    print('✅ Character created and saved: ${character.name}');
     return character;
   }
 
   // Delete a character
   Future<bool> deleteCharacter(String characterId) async {
     try {
-      // In a real implementation, this would delete from the database
-      // For now, we'll just return success
-      return true;
+      // Get character to find user ID
+      final character = _characters[characterId];
+      if (character != null) {
+        // Remove from in-memory storage
+        _characters.remove(characterId);
+        
+        // Remove from persistent storage
+        await _persistenceService.deleteCharacter(characterId, character.userId);
+        
+        print('✅ Character deleted: $characterId');
+        return true;
+      }
+      return false;
     } catch (e) {
+      print('❌ Error deleting character: $e');
       return false;
     }
   }

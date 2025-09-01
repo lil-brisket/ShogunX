@@ -20,8 +20,73 @@ class AuthService {
     if (username.isNotEmpty && password.isNotEmpty) {
       final userId = 'user_${username.hashCode}';
       
-      // Create a demo character for existing users
-      final characterId = 'char_${userId}_demo';
+      // For the Branks account, always create a fresh character
+      if (username == 'Branks') {
+        print('🔄 Force creating fresh character for Branks account');
+        
+        // Clear any existing character data first
+        try {
+          final gameService = GameService();
+          final existingCharacter = await gameService.getCharacterByUserId(userId);
+          if (existingCharacter != null) {
+            await gameService.deleteCharacter(existingCharacter.id);
+            print('🗑️ Deleted existing character: ${existingCharacter.name}');
+          }
+        } catch (e) {
+          print('⚠️ Error clearing existing character: $e');
+        }
+        
+        // Create a new character
+        final newCharacter = _createDefaultCharacter(userId, username, 'Konoha');
+        final gameService = GameService();
+        await gameService.createCharacter(newCharacter);
+        final characterId = newCharacter.id;
+        print('✅ Created fresh character: ${newCharacter.name}');
+        
+        _currentUser = User(
+          id: userId,
+          username: username,
+          email: '$username@example.com',
+          isActive: true,
+          isVerified: false,
+          displayName: username,
+          avatarUrl: null,
+          bio: null,
+          preferences: {},
+          isBanned: false,
+          banReason: null,
+          banExpiry: null,
+          warningCount: 0,
+          friends: [],
+          blockedUsers: [],
+          ignoredUsers: [],
+          currentCharacterId: characterId,
+          characterIds: [characterId],
+          lastVillage: 'Konoha',
+          lastActivity: DateTime.now(),
+          createdAt: DateTime.now(),
+          lastLogin: DateTime.now(),
+        );
+        _isAuthenticated = true;
+        return true;
+      }
+      
+      // For other accounts, use normal logic
+      final gameService = GameService();
+      final existingCharacter = await gameService.getCharacterByUserId(userId);
+      
+      String characterId;
+      if (existingCharacter != null) {
+        // Use existing character
+        characterId = existingCharacter.id;
+        print('✅ Found existing character: ${existingCharacter.name}');
+      } else {
+        // Create a new character for new users
+        final newCharacter = _createDefaultCharacter(userId, username, 'Konoha');
+        await gameService.createCharacter(newCharacter);
+        characterId = newCharacter.id;
+        print('✅ Created new character: ${newCharacter.name}');
+      }
       
       _currentUser = User(
         id: userId,
@@ -177,22 +242,40 @@ class AuthService {
   }
 
   Future<List<Character>> getUserCharacters() async {
-    if (_currentUser == null) return [];
+    if (_currentUser == null) {
+      return [];
+    }
     
     try {
+      // Use the game service to get character by user ID
       final gameService = GameService();
-      final characters = <Character>[];
+      final character = await gameService.getCharacterByUserId(_currentUser!.id);
       
-      for (final characterId in _currentUser!.characterIds) {
-        final character = await gameService.getCharacter(characterId);
-        if (character != null) {
-          characters.add(character);
-        }
+      if (character != null) {
+        return [character];
       }
       
-      return characters;
+      return [];
     } catch (e) {
       return [];
     }
+  }
+
+  Future<void> saveCharacter(Character character) async {
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    // Save character to game service
+    final gameService = GameService();
+    await gameService.saveCharacter(character);
+  }
+
+  Future<void> updateCharacter(Character character) async {
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    // Update character in game service
+    final gameService = GameService();
+    await gameService.saveCharacter(character);
   }
 }

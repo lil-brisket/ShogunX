@@ -3,6 +3,7 @@ import '../models/models.dart';
 import '../services/services.dart';
 import 'training_provider.dart';
 import 'game_provider.dart';
+import '../utils/logger.dart';
 
 final authServiceProvider = Provider<FirebaseAuthService>((ref) {
   return FirebaseAuthService();
@@ -64,11 +65,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final success = await _authService.login(username, password);
       if (success) {
-        // Load user characters after successful login
-        final characters = await loadUserCharacters();
+        // Get the user first
+        final user = _authService.currentUser;
+        if (user == null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Login succeeded but no user data received',
+          );
+          return false;
+        }
+        
+        // Load user characters using the user ID
+        final characters = await loadUserCharactersForUser(user.id);
         
         state = state.copyWith(
-          user: _authService.currentUser,
+          user: user,
           isAuthenticated: true,
           isLoading: false,
         );
@@ -105,11 +116,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final success = await _authService.register(username, password, village);
       if (success) {
-        // Load user characters after successful registration
-        final characters = await loadUserCharacters();
+        // Get the user first
+        final user = _authService.currentUser;
+        if (user == null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Registration succeeded but no user data received',
+          );
+          return false;
+        }
+        
+        // Load user characters using the user ID
+        final characters = await loadUserCharactersForUser(user.id);
         
         state = state.copyWith(
-          user: _authService.currentUser,
+          user: user,
           isAuthenticated: true,
           isLoading: false,
         );
@@ -141,17 +162,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout(WidgetRef ref) async {
-    print('🔄 Starting logout process...');
+    Logger.info('Starting logout process...');
     
     try {
-      print('🧹 Clearing training sessions...');
+      Logger.info('Clearing training sessions...');
       // Clear training sessions before logout
       ref.read(activeTrainingSessionsProvider.notifier).clearAllSessions();
       
-      print('🔐 Calling Firebase logout...');
+      Logger.info('Calling Firebase logout...');
       await _authService.logout();
       
-      print('🎮 Clearing game state...');
+      Logger.info('Clearing game state...');
       // Clear game state on logout
       ref.read(gameStateProvider.notifier).clearSelectedCharacter();
       ref.read(gameStateProvider.notifier).setUserCharacters([]);
@@ -164,7 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Clear shop filters
       ref.read(shopProviderProvider.notifier).clearFilters();
       
-      print('📱 Updating auth state...');
+      Logger.info('Updating auth state...');
       // Update auth state last to trigger navigation
       state = state.copyWith(
         user: null,
@@ -173,9 +194,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         error: null,
       );
       
-      print('✅ Logout successful - user state cleared');
+      Logger.success('Logout successful - user state cleared');
     } catch (e) {
-      print('❌ Logout error: $e');
+      Logger.error('Logout error: $e');
       // Don't use ref in catch block as widget might be disposed
       state = state.copyWith(
         isLoading: false,
@@ -203,12 +224,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<List<Character>> loadUserCharacters() async {
     try {
-      final characters = await _authService.getUserCharacters();
-      print('✅ Loaded ${characters.length} characters for user');
-      return characters;
+      if (state.user == null) {
+        Logger.warning('No user logged in, cannot load characters');
+        return [];
+      }
+      
+      return await loadUserCharactersForUser(state.user!.id);
     } catch (e) {
-      print('❌ Failed to load user characters: $e');
-      // Return empty list if Firebase is not available
+      Logger.error('Failed to load user characters: $e');
+      // Return empty list if there's an error
+      return [];
+    }
+  }
+
+  Future<List<Character>> loadUserCharactersForUser(String userId) async {
+    try {
+      // Use the new method to get character by user ID
+      final gameService = GameService();
+      final character = await gameService.getCharacterByUserId(userId);
+      
+      if (character != null) {
+        Logger.success('Loaded character: ${character.name}');
+        return [character];
+      } else {
+        Logger.info('No character found for user ID: $userId');
+        return [];
+      }
+    } catch (e) {
+      Logger.error('Failed to load user characters for user ID $userId: $e');
+      // Return empty list if there's an error
       return [];
     }
   }
@@ -230,9 +274,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _authService.updateCharacter(character);
       // Update in local state
       ref.read(gameStateProvider.notifier).updateCharacter(character);
-      print('✅ Character updated in both Firebase and local state');
+      Logger.success('Character updated in both Firebase and local state');
     } catch (e) {
-      print('❌ Failed to update character: $e');
+      Logger.error('Failed to update character: $e');
     }
   }
 
@@ -245,12 +289,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> refreshUserCharacters(WidgetRef ref) async {
-    final characters = await loadUserCharacters();
+    if (state.user == null) {
+      Logger.warning('No user logged in, cannot refresh characters');
+      return;
+    }
+    
+    final characters = await loadUserCharactersForUser(state.user!.id);
     ref.read(gameStateProvider.notifier).setUserCharacters(characters);
     
     // If no characters exist, try to create a default one
-    if (characters.isEmpty && state.user != null) {
-      print('🔄 No characters found, attempting to create default character...');
+    if (characters.isEmpty) {
+      Logger.info('No characters found, attempting to create default character...');
       try {
         final defaultCharacter = _createDefaultCharacter(
           state.user!.id, 
@@ -258,16 +307,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
           state.user!.lastVillage ?? 'Konoha'
         );
         await createCharacter(defaultCharacter, ref);
-        print('✅ Default character created successfully');
+        Logger.success('Default character created successfully');
       } catch (e) {
-        print('❌ Failed to create default character: $e');
+        Logger.error('Failed to create default character: $e');
       }
     }
   }
 
   Future<void> createCharacter(Character character, WidgetRef ref) async {
     try {
-      print('🎮 Creating character: ${character.name}');
+      Logger.info('Creating character: ${character.name}');
       
       // Check if user already has a character
       final existingCharacters = ref.read(gameStateProvider.notifier).state.userCharacters;

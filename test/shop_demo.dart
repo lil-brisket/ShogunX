@@ -3,8 +3,6 @@ import 'package:ninja_world_mmo/services/game_service.dart';
 import 'package:ninja_world_mmo/models/models.dart';
 
 void main() async {
-  print('=== Shop System Demo ===\n');
-  
   final shopService = ShopService();
   final gameService = GameService();
   
@@ -54,38 +52,17 @@ void main() async {
     inventory: [],
     equippedItems: {},
   );
-  
-  print('Initial Character State:');
-  print('Name: ${character.name}');
-  print('Ryo on hand: ${character.ryoOnHand}');
-  print('Inventory items: ${character.inventory.length}');
-  print('');
-  
   // Get available items from shop
   final availableItems = shopService.getAvailableItems();
-  print('Available items in shop: ${availableItems.length}');
-  
   if (availableItems.isNotEmpty) {
     final firstItem = availableItems.first;
     print('First item: ${firstItem.name} (${firstItem.buyPrice} ryo)');
-    print('');
-    
     // Attempt to purchase the item
-    print('Attempting to purchase ${firstItem.name}...');
     final result = await shopService.purchaseItem(character, firstItem);
     
     if (result.success) {
-      print('✅ Purchase successful!');
-      print('Message: ${result.message}');
-      
       final updatedCharacter = result.updatedCharacter!;
-      print('\nUpdated Character State:');
-      print('Name: ${updatedCharacter.name}');
-      print('Ryo on hand: ${updatedCharacter.ryoOnHand}');
-      print('Inventory items: ${updatedCharacter.inventory.length}');
-      
       if (updatedCharacter.inventory.isNotEmpty) {
-        print('Inventory contents:');
         for (final item in updatedCharacter.inventory) {
           print('  - ${item.name} (${item.rarity})');
         }
@@ -93,18 +70,10 @@ void main() async {
       
       // Save the character to game service
       await gameService.saveCharacter(updatedCharacter);
-      print('\n✅ Character saved to game service');
-      
       // Retrieve the character to verify persistence
       final retrievedCharacter = await gameService.getCharacter(updatedCharacter.id);
       if (retrievedCharacter != null) {
-        print('\nRetrieved Character from Game Service:');
-        print('Name: ${retrievedCharacter.name}');
-        print('Ryo on hand: ${retrievedCharacter.ryoOnHand}');
-        print('Inventory items: ${retrievedCharacter.inventory.length}');
-        
         if (retrievedCharacter.inventory.isNotEmpty) {
-          print('Inventory contents:');
           for (final item in retrievedCharacter.inventory) {
             print('  - ${item.name} (${item.rarity})');
           }
@@ -112,12 +81,7 @@ void main() async {
       }
       
     } else {
-      print('❌ Purchase failed!');
-      print('Message: ${result.message}');
     }
   } else {
-    print('No items available in shop');
   }
-  
-  print('\n=== Demo Complete ===');
 }

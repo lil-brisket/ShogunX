@@ -1,0 +1,5 @@
+[33m22d70f8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add Combat Arena feature to village page with Practice, VS AI, and Battle Tower modes
+[33m08f5428[m Fix compilation errors in loadout screen and add equipment system
+[33m12d6cc2[m Fix shop system bugs and update loadout screen to display inventory items
+[33m839e14d[m feat: enhance avatar system with URL pasting, history, and square avatars - Add avatar upload functionality with URL pasting - Implement avatar history (last 5 used URLs) - Convert all avatars to square shape with rounded corners - Increase profile page avatar size to 100x100 - Remove default avatars for cleaner interface - Add AvatarService for persistent avatar management - Update all screens to use square avatar containers - Fix linting issues and improve code quality
+[33m2d7c161[m feat: Implement HP/CP/SP regeneration system and enhanced hospital functionality

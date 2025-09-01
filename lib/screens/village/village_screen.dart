@@ -813,66 +813,17 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'No characters found for this user. Please create one.',
+              'Loading character...',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                // Create a default character
-                final defaultCharacter = Character(
-                  id: 'char_${user.id}_${DateTime.now().millisecondsSinceEpoch}',
-                  userId: user.id,
-                  name: '${user.username}_${DateTime.now().millisecondsSinceEpoch % 1000}',
-                  village: user.lastVillage ?? 'Konoha',
-                  clanId: null,
-                  clanRank: null,
-                  ninjaRank: 'Genin',
-                  elements: ['Fire'],
-                  bloodline: null,
-                  strength: 1000,
-                  intelligence: 1000,
-                  speed: 1000,
-                  defense: 1000,
-                  willpower: 1000,
-                  bukijutsu: 1000,
-                  ninjutsu: 1000,
-                  taijutsu: 1000,
-                  genjutsu: 0,
-                  jutsuMastery: {},
-                  currentHp: 40000,
-                  currentChakra: 30000,
-                  currentStamina: 30000,
-                  experience: 0,
-                  level: 1,
-                  hpRegenRate: 100,
-                  cpRegenRate: 100,
-                  spRegenRate: 100,
-                  ryoOnHand: 1000,
-                  ryoBanked: 0,
-                  villageLoyalty: 100,
-                  outlawInfamy: 0,
-                  marriedTo: null,
-                  senseiId: null,
-                  studentIds: [],
-                  pvpWins: 0,
-                  pvpLosses: 0,
-                  pveWins: 0,
-                  pveLosses: 0,
-                  medicalExp: 0,
-                  avatarUrl: null,
-                  gender: 'Unknown',
-                  inventory: [],
-                  equippedItems: {},
-                );
-                
-                await ref.read(authStateProvider.notifier).createCharacter(defaultCharacter, ref);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Create Character'),
+            CircularProgressIndicator(
+              color: Colors.deepOrange,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'If this takes too long, please refresh the app.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
             ),
           ],
         ),
@@ -1072,6 +1023,9 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                       completedNotifier.addCompletedSession(completedSession);
                     }
                     
+                    // Check if widget is still mounted before using context
+                    if (!mounted) return;
+                    
                     // Show success message
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -1105,6 +1059,9 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                       completedNotifier.addCompletedSession(completedSession);
                     }
                     
+                    // Check if widget is still mounted before using context
+                    if (!mounted) return;
+                    
                     // Show success message
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -1123,7 +1080,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Redeem'),
+                  child: Text('Redeem (${session.potentialGain} XP)'),
                 ),
               ],
             ],
@@ -1167,6 +1124,10 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
       child: InkWell(
         onTap: canTrain && !isCurrentlyTraining ? () async {
           await trainingNotifier.startTraining(character, statType, ref);
+          
+          // Check if widget is still mounted before using context
+          if (!mounted) return;
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(

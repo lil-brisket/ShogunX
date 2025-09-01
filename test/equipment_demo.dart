@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../lib/models/models.dart';
-import '../lib/services/services.dart';
+import 'package:ninja_world_mmo/models/models.dart';
+import 'package:ninja_world_mmo/services/services.dart';
 
 class EquipmentDemo extends StatefulWidget {
-  const EquipmentDemo({Key? key}) : super(key: key);
+  const EquipmentDemo({super.key});
 
   @override
   State<EquipmentDemo> createState() => _EquipmentDemoState();
@@ -58,18 +58,7 @@ class _EquipmentDemoState extends State<EquipmentDemo> {
     });
   }
 
-  Future<void> _equipItem(Item item) async {
-    if (_character == null) return;
 
-    final result = await _equipmentService.equipItem(_character!, item);
-    
-    setState(() {
-      _message = result.message;
-      if (result.success && result.updatedCharacter != null) {
-        _character = result.updatedCharacter;
-      }
-    });
-  }
 
   Future<void> _unequipItem(EquipmentSlot slot) async {
     if (_character == null) return;
@@ -176,7 +165,7 @@ class _EquipmentDemoState extends State<EquipmentDemo> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   border: Border.all(color: Colors.green),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -258,7 +247,7 @@ class _EquipmentDemoState extends State<EquipmentDemo> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -316,7 +305,7 @@ class _EquipmentDemoState extends State<EquipmentDemo> {
                 margin: const EdgeInsets.all(8.0),
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   border: Border.all(color: Colors.blue),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -329,7 +318,7 @@ class _EquipmentDemoState extends State<EquipmentDemo> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
-            ..._availableItems.map(_buildItemCard).toList(),
+            ..._availableItems.map(_buildItemCard),
           ],
         ),
       ),
