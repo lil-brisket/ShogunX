@@ -91,7 +91,7 @@ class AuthService {
       _currentUser = User(
         id: userId,
         username: username,
-        email: '$username@example.com',
+        email: existingCharacter != null ? '$username@example.com' : '$username@example.com', // This will be updated when we have real user data
         isActive: true,
         isVerified: false,
         displayName: username,
@@ -118,12 +118,12 @@ class AuthService {
     return false;
   }
 
-  Future<bool> register(String username, String password, String village) async {
+  Future<bool> register(String username, String email, String password, String village) async {
     // Simulate API delay
     await Future.delayed(const Duration(milliseconds: 500));
     
     // Stub registration logic
-    if (username.isNotEmpty && password.isNotEmpty && village.isNotEmpty) {
+    if (username.isNotEmpty && email.isNotEmpty && password.isNotEmpty && village.isNotEmpty) {
       final userId = 'user_${username.hashCode}';
       
       // Create a default character for the new user
@@ -135,7 +135,7 @@ class AuthService {
       _currentUser = User(
         id: userId,
         username: username,
-        email: '$username@example.com',
+        email: email,
         isActive: true,
         isVerified: false,
         displayName: username,
@@ -170,27 +170,27 @@ class AuthService {
       village: village,
       clanId: null,
       clanRank: null,
-      ninjaRank: 'Genin',
+      ninjaRank: 'Academy Student',
       elements: _getRandomElements(),
       bloodline: null,
-      strength: 1000,
-      intelligence: 1000,
-      speed: 1000,
-      defense: 1000,
-      willpower: 1000,
-      bukijutsu: 1000,
-      ninjutsu: 1000,
-      taijutsu: 1000,
-      genjutsu: 0,
+      strength: 1,
+      intelligence: 1,
+      speed: 1,
+      defense: 1,
+      willpower: 1,
+      bukijutsu: 1,
+      ninjutsu: 1,
+      taijutsu: 1,
+      genjutsu: 1,
       jutsuMastery: {},
-      currentHp: 40000, // maxHp = (1000*2 + 1000) * 10 = 30000, but we'll set it higher for starting
-      currentChakra: 30000, // maxChakra = (1000*2 + 1000) * 10 = 30000
-      currentStamina: 30000, // maxStamina = (1000*2 + 1000) * 10 = 30000
+      currentHp: 30, // maxHp = (1*2 + 1) * 10 = 30
+      currentChakra: 30, // maxChakra = (1*2 + 1) * 10 = 30
+      currentStamina: 30, // maxStamina = (1*2 + 1) * 10 = 30
       experience: 0,
       level: 1,
-      hpRegenRate: 100,
-      cpRegenRate: 100,
-      spRegenRate: 100,
+      hpRegenRate: 1,
+      cpRegenRate: 1,
+      spRegenRate: 1,
       ryoOnHand: 1000,
       ryoBanked: 0,
       villageLoyalty: 100,

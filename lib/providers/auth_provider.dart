@@ -110,11 +110,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> register(String username, String password, String village, WidgetRef ref) async {
+  Future<bool> register(String username, String email, String password, String village, WidgetRef ref) async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final success = await _authService.register(username, password, village);
+      final success = await _authService.register(username, email, password, village);
       if (success) {
         // Get the user first
         final user = _authService.currentUser;
@@ -165,8 +165,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     Logger.info('Starting logout process...');
     
     try {
-      Logger.info('Clearing training sessions...');
-      // Clear training sessions before logout
+      Logger.info('Saving training sessions before logout...');
+      // Save all active training sessions to Firebase before clearing them
+      await ref.read(activeTrainingSessionsProvider.notifier).saveAllSessionsToFirebase(ref);
+      
+      Logger.info('Clearing training sessions from memory...');
+      // Clear training sessions from memory after saving to Firebase
       ref.read(activeTrainingSessionsProvider.notifier).clearAllSessions();
       
       Logger.info('Calling Firebase logout...');
@@ -377,50 +381,74 @@ class AuthNotifier extends StateNotifier<AuthState> {
       village: village,
       clanId: null,
       clanRank: null,
-      ninjaRank: 'Genin',
+      ninjaRank: 'Academy Student',
       elements: _getRandomElements(),
       bloodline: null,
+      
+      // Core Stats (starting values)
       strength: 1000,
       intelligence: 1000,
       speed: 1000,
       defense: 1000,
       willpower: 1000,
+      
+      // Combat Stats (starting values)
       bukijutsu: 1000,
       ninjutsu: 1000,
       taijutsu: 1000,
-      genjutsu: 0,
+      genjutsu: 1000,
+      
+      // Jutsu Mastery (empty for new characters)
       jutsuMastery: {},
-      currentHp: 40000,
-      currentChakra: 30000,
-      currentStamina: 30000,
+      
+      // Current Status
+      currentHp: 150000,
+      currentChakra: 80000,
+      currentStamina: 180000,
       experience: 0,
       level: 1,
+      
+      // Regeneration Rates (per 30 seconds)
       hpRegenRate: 100,
       cpRegenRate: 100,
       spRegenRate: 100,
+      
+      // Resources
       ryoOnHand: 1000,
       ryoBanked: 0,
+      
+      // Reputation
       villageLoyalty: 100,
       outlawInfamy: 0,
+      
+      // Relationships
       marriedTo: null,
       senseiId: null,
       studentIds: [],
+      
+      // Records
       pvpWins: 0,
       pvpLosses: 0,
       pveWins: 0,
       pveLosses: 0,
+      
+      // Medical
       medicalExp: 0,
+      
+      // Profile
       avatarUrl: null,
       gender: 'Unknown',
+      
+      // Inventory
       inventory: [],
       equippedItems: {},
     );
   }
 
   List<String> _getRandomElements() {
-    final allElements = ['Fire', 'Water', 'Earth', 'Wind', 'Lightning'];
-    final random = DateTime.now().millisecondsSinceEpoch % allElements.length;
-    return [allElements[random]];
+    final elements = ['Fire', 'Water', 'Earth', 'Wind', 'Lightning'];
+    elements.shuffle();
+    return elements.take(2).toList(); // Return 2 random elements
   }
 
   void completeTraining(String characterId, String statType, int statGain, WidgetRef ref) {

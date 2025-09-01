@@ -157,11 +157,11 @@ class TrainingSession {
       'id': id,
       'characterId': characterId,
       'statType': statType,
-      'startTime': startTime,
+      'startTime': Timestamp.fromDate(startTime),
       'currentStatValue': currentStatValue,
       'maxStat': maxStat,
       'isActive': isActive,
-      'endTime': endTime,
+      'endTime': endTime != null ? Timestamp.fromDate(endTime!) : null,
       'actualGain': actualGain,
     };
   }

@@ -41,45 +41,81 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     });
   }
 
+
+
   // Load existing training sessions from Firebase
   Future<void> loadExistingSessions(String characterId, WidgetRef ref) async {
     try {
+      Logger.info('🔄 Loading training sessions for character: $characterId');
       final sessions = await ref.read(authStateProvider.notifier).authService.getCharacterTrainingSessions(characterId);
+      
+      Logger.info('📊 Retrieved ${sessions.length} training sessions from Firebase');
+      for (final session in sessions) {
+        Logger.info('  - Session: ${session.statType} (${session.isActive ? 'Active' : 'Inactive'}) - Started: ${session.startTime}');
+      }
+      
       state = sessions;
       
       // Start progress timer if there are active sessions
       if (sessions.isNotEmpty) {
         _startProgressTimer();
+        Logger.success('✅ Started progress timer for ${sessions.length} active training sessions');
+      } else {
+        Logger.info('ℹ️ No active training sessions found for character: $characterId');
       }
       
-             Logger.success('Loaded ${sessions.length} existing training sessions for character: $characterId');
-     } catch (e) {
-       Logger.error('Failed to load training sessions: $e');
-       state = [];
-     }
+      Logger.success('Loaded ${sessions.length} existing training sessions for character: $characterId');
+    } catch (e) {
+      Logger.error('Failed to load training sessions: $e');
+      state = [];
+    }
   }
 
   // Clear all training sessions (for logout)
   void clearAllSessions() {
-         state = [];
-     Logger.success('Cleared all training sessions');
-   }
+    Logger.info('🗑️ Clearing all training sessions from memory (${state.length} sessions)');
+    if (state.isNotEmpty) {
+      for (final session in state) {
+        Logger.info('  - Clearing session: ${session.statType} for character: ${session.characterId}');
+      }
+    }
+    state = [];
+    
+    // Cancel timers when clearing sessions
+    _progressTimer?.cancel();
+    
+    Logger.success('✅ Cleared all training sessions from memory');
+  }
 
   // Save all active training sessions to Firebase
   Future<void> saveAllSessionsToFirebase(WidgetRef ref) async {
     try {
+      Logger.info('💾 Saving ${state.length} training sessions to Firebase...');
+      
+      if (state.isEmpty) {
+        Logger.info('ℹ️ No training sessions to save');
+        return;
+      }
+      
       for (final session in state) {
+        Logger.info('  - Saving session: ${session.statType} for character: ${session.characterId}');
         await ref.read(authStateProvider.notifier).authService.saveTrainingSession(session);
       }
-             Logger.success('Saved ${state.length} training sessions to Firebase');
-     } catch (e) {
-       Logger.error('Failed to save training sessions: $e');
-     }
+      
+      Logger.success('✅ Successfully saved ${state.length} training sessions to Firebase');
+    } catch (e) {
+      Logger.error('❌ Failed to save training sessions: $e');
+    }
   }
+
+
 
   // Start a new training session
   Future<void> startTraining(Character character, String statType, WidgetRef ref) async {
+    Logger.info('🚀 Starting training session for ${character.name} - Stat: $statType');
+    
     if (!TrainingService.canTrainStat(character, statType)) {
+      Logger.warning('⚠️ Cannot train $statType - already at maximum value');
       return; // Cannot train if stat is already maxed
     }
 
@@ -90,19 +126,23 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     ).firstOrNull;
 
     if (existingSession != null) {
+      Logger.warning('⚠️ Character ${character.name} is already training ${existingSession.statType}');
       return; // Already training another stat
     }
 
     final newSession = TrainingService.startTraining(character, statType);
+    Logger.info('📝 Created new training session: ${newSession.id} for ${newSession.statType}');
+    
     state = [...state, newSession];
     
     // Start progress timer for real-time updates
     _startProgressTimer();
     
-         // Save to Firebase
-     await ref.read(authStateProvider.notifier).authService.saveTrainingSession(newSession);
-     Logger.success('Training session started and saved to Firebase: ${newSession.statType}');
-   }
+    // Save to Firebase
+    Logger.info('💾 Saving new training session to Firebase...');
+    await ref.read(authStateProvider.notifier).authService.saveTrainingSession(newSession);
+    Logger.success('✅ Training session started and saved to Firebase: ${newSession.statType}');
+  }
 
   // Complete a training session
   TrainingSession? completeTraining(String sessionId) {
@@ -201,6 +241,20 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
 
   // Get all active sessions
   List<TrainingSession> get allSessions => state;
+  
+  // Debug method to check training session state
+  void debugTrainingSessions() {
+    Logger.info('🔍 Debug: Current training sessions state:');
+    if (state.isEmpty) {
+      Logger.info('  - No training sessions in memory');
+    } else {
+      for (final session in state) {
+        Logger.info('  - Session ${session.id}: ${session.statType} for ${session.characterId} (Active: ${session.isActive})');
+      }
+    }
+  }
+
+
 }
 
 // Notifier for completed training sessions

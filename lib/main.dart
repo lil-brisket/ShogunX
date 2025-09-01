@@ -28,11 +28,17 @@ void main() async {
   );
 }
 
-class NinjaWorldMMOApp extends ConsumerWidget {
+class NinjaWorldMMOApp extends ConsumerStatefulWidget {
   const NinjaWorldMMOApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NinjaWorldMMOApp> createState() => _NinjaWorldMMOAppState();
+}
+
+class _NinjaWorldMMOAppState extends ConsumerState<NinjaWorldMMOApp> {
+
+  @override
+  Widget build(BuildContext context) {
     final router = GoRouter(
       initialLocation: '/',
       routes: [

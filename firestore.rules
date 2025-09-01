@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin collection - only admins can read/write
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+    }
+    
+    // Users collection - admins can read/write, users can only read their own data
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Only admins can write to user data
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Items collection - admins can read/write, users can only read
+    match /items/{itemId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Jutsus collection - admins can read/write, users can only read
+    match /jutsus/{jutsuId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Quests collection - admins can read/write, users can only read
+    match /quests/{questId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Missions collection - admins can read/write, users can only read
+    match /missions/{missionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Clans collection - admins can read/write, users can only read
+    match /clans/{clanId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Villages collection - admins can read/write, users can only read
+    match /villages/{villageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Chat messages - users can read/write their own messages, admins can read all
+    match /chat_messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+    
+    // Game updates - admins can read/write, users can only read
+    match /game_updates/{updateId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Training sessions - users can read/write their own, admins can read/write all
+    match /training_sessions/{sessionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+    
+    // Battle records - users can read their own, admins can read/write all
+    match /battle_records/{recordId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Hospital records - users can read their own, admins can read/write all
+    match /hospital_records/{recordId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -45,7 +45,7 @@ class FirebaseAuthService {
     return _firestore!;
   }
 
-  Future<bool> register(String username, String password, String village) async {
+  Future<bool> register(String username, String email, String password, String village) async {
     try {
       // Check if username already exists
       final existingUser = await firestore
@@ -57,9 +57,19 @@ class FirebaseAuthService {
         throw Exception('Username already exists');
       }
 
+      // Check if email already exists
+      final existingEmail = await firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (existingEmail.docs.isNotEmpty) {
+        throw Exception('Email already exists');
+      }
+
       // Create Firebase Auth user
       final userCredential = await auth.createUserWithEmailAndPassword(
-        email: '$username@ninjaworld.com',
+        email: email,
         password: password,
       );
 
@@ -73,7 +83,7 @@ class FirebaseAuthService {
       final user = User(
         id: userId,
         username: username,
-        email: '$username@ninjaworld.com',
+        email: email,
         isActive: true,
         isVerified: false,
         displayName: username,
@@ -200,27 +210,27 @@ class FirebaseAuthService {
       village: village,
       clanId: null,
       clanRank: null,
-      ninjaRank: 'Genin',
+      ninjaRank: 'Academy Student',
       elements: _getRandomElements(),
       bloodline: null,
-      strength: 1000,
-      intelligence: 1000,
-      speed: 1000,
-      defense: 1000,
-      willpower: 1000,
-      bukijutsu: 1000,
-      ninjutsu: 1000,
-      taijutsu: 1000,
-      genjutsu: 0,
+      strength: 1,
+      intelligence: 1,
+      speed: 1,
+      defense: 1,
+      willpower: 1,
+      bukijutsu: 1,
+      ninjutsu: 1,
+      taijutsu: 1,
+      genjutsu: 1,
       jutsuMastery: {},
-      currentHp: 40000,
-      currentChakra: 30000,
-      currentStamina: 30000,
+      currentHp: 30,
+      currentChakra: 30,
+      currentStamina: 30,
       experience: 0,
       level: 1,
-      hpRegenRate: 100,
-      cpRegenRate: 100,
-      spRegenRate: 100,
+      hpRegenRate: 1,
+      cpRegenRate: 1,
+      spRegenRate: 1,
       ryoOnHand: 1000,
       ryoBanked: 0,
       villageLoyalty: 100,

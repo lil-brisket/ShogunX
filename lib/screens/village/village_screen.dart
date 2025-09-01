@@ -599,7 +599,54 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     if (user == null) return _buildNoUserMessage();
     
     final currentCharacter = ref.watch(gameStateProvider).selectedCharacter;
-    if (currentCharacter == null) return _buildNoCharacterMessage();
+    final gameState = ref.watch(gameStateProvider);
+    
+    // Debug logging
+    print('🔍 Training Tab Debug:');
+    print('  - User: ${user.username}');
+    print('  - Current Character: ${currentCharacter?.name ?? 'null'}');
+    print('  - User Characters: ${gameState.userCharacters.length}');
+    print('  - User Characters: ${gameState.userCharacters.map((c) => c.name).join(', ')}');
+    
+    if (currentCharacter == null) {
+      // Auto-refresh user characters if none are loaded
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final gameState = ref.read(gameStateProvider);
+        if (gameState.userCharacters.isEmpty) {
+          print('🔄 Auto-refreshing user characters...');
+          ref.read(authStateProvider.notifier).refreshUserCharacters(ref);
+        }
+      });
+      
+      // Show a better loading state that explains what's happening
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.person_search,
+              color: Colors.deepOrange,
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading Your Character',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please wait while we load your character data...',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            CircularProgressIndicator(
+              color: Colors.deepOrange,
+            ),
+          ],
+        ),
+      );
+    }
     
     final activeSessions = ref.watch(activeTrainingSessionsProvider);
     final characterSessions = activeSessions.where((s) => s.characterId == currentCharacter.id).toList();
@@ -806,48 +853,75 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     final user = ref.watch(authStateProvider).user;
     if (user == null) return _buildNoUserMessage();
 
-    final userCharacters = ref.watch(authStateProvider.notifier).getUserCharacters(ref);
-    if (userCharacters.isEmpty) {
+    // Watch the game state to see if characters are loaded
+    final gameState = ref.watch(gameStateProvider);
+    final userCharacters = gameState.userCharacters;
+    
+    // If we have characters, automatically select the first one
+    if (userCharacters.isNotEmpty) {
+      // Auto-select the character if none is currently selected
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (gameState.selectedCharacter == null) {
+          print('🔄 Auto-selecting character: ${userCharacters.first.name}');
+          ref.read(authStateProvider.notifier).selectCharacter(userCharacters.first, ref);
+        }
+      });
+      
+      // Show loading while character is being selected
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Loading character...',
+              'Loading your character...',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             const SizedBox(height: 16),
             CircularProgressIndicator(
               color: Colors.deepOrange,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'If this takes too long, please refresh the app.',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
-            ),
           ],
         ),
       );
     }
-
+    
+    // If no characters exist, show character creation option
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'Please select a character to access training.',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+          Icon(
+            Icons.person_add,
+            color: Colors.deepOrange,
+            size: 64,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          Text(
+            'No Character Found',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You need to create a character to access training.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
             onPressed: () {
-              ref.read(authStateProvider.notifier).selectCharacter(userCharacters.first, ref);
+              // Navigate to character creation
+              context.push('/create-character');
             },
+            icon: const Icon(Icons.person_add),
+            label: const Text('Create Character'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Select Character'),
           ),
         ],
       ),
