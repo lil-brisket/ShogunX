@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/training_session.dart';
 import '../models/character.dart';
 import '../services/training_service.dart';
+import 'auth_provider.dart';
 
 // Provider for active training sessions
 final activeTrainingSessionsProvider = StateNotifierProvider<ActiveTrainingSessionsNotifier, List<TrainingSession>>((ref) {
@@ -17,8 +18,38 @@ final completedTrainingSessionsProvider = StateNotifierProvider<CompletedTrainin
 class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>> {
   ActiveTrainingSessionsNotifier() : super([]);
 
+  // Load existing training sessions from Firebase
+  Future<void> loadExistingSessions(String characterId, WidgetRef ref) async {
+    try {
+      final sessions = await ref.read(authStateProvider.notifier).authService.getCharacterTrainingSessions(characterId);
+      state = sessions;
+      print('✅ Loaded ${sessions.length} existing training sessions for character: $characterId');
+    } catch (e) {
+      print('❌ Failed to load training sessions: $e');
+      state = [];
+    }
+  }
+
+  // Clear all training sessions (for logout)
+  void clearAllSessions() {
+    state = [];
+    print('✅ Cleared all training sessions');
+  }
+
+  // Save all active training sessions to Firebase
+  Future<void> saveAllSessionsToFirebase(WidgetRef ref) async {
+    try {
+      for (final session in state) {
+        await ref.read(authStateProvider.notifier).authService.saveTrainingSession(session);
+      }
+      print('✅ Saved ${state.length} training sessions to Firebase');
+    } catch (e) {
+      print('❌ Failed to save training sessions: $e');
+    }
+  }
+
   // Start a new training session
-  void startTraining(Character character, String statType) {
+  Future<void> startTraining(Character character, String statType, WidgetRef ref) async {
     if (!TrainingService.canTrainStat(character, statType)) {
       return; // Cannot train if stat is already maxed
     }
@@ -35,6 +66,10 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
 
     final newSession = TrainingService.startTraining(character, statType);
     state = [...state, newSession];
+    
+    // Save to Firebase
+    await ref.read(authStateProvider.notifier).authService.saveTrainingSession(newSession);
+    print('✅ Training session started and saved to Firebase: ${newSession.statType}');
   }
 
   // Complete a training session
@@ -53,6 +88,61 @@ class ActiveTrainingSessionsNotifier extends StateNotifier<List<TrainingSession>
     state = state.where((s) => s.id != sessionId).toList();
     
     return completedSession;
+  }
+
+  // Complete training and update character stats
+  Future<void> completeTrainingAndUpdateCharacter(String sessionId, WidgetRef ref) async {
+    final completedSession = completeTraining(sessionId);
+    if (completedSession == null) return;
+
+    // Get the current character from game state
+    final gameState = ref.read(gameStateProvider);
+    final currentCharacter = gameState.selectedCharacter;
+    
+    if (currentCharacter == null || currentCharacter.id != completedSession.characterId) {
+      print('❌ Character not found for training completion');
+      return;
+    }
+
+    // Update character stats based on training completion
+    final updatedCharacter = _updateCharacterStatFromTraining(
+      currentCharacter, 
+      completedSession.statType, 
+      completedSession.actualGain ?? 0
+    );
+
+    // Save to Firebase and update local state
+    await ref.read(authStateProvider.notifier).updateCharacter(updatedCharacter, ref);
+    
+    // Delete training session from Firebase
+    await ref.read(authStateProvider.notifier).authService.deleteTrainingSession(sessionId);
+    
+    print('✅ Training completed and character updated: ${completedSession.statType} +${completedSession.actualGain ?? 0}');
+  }
+
+  Character _updateCharacterStatFromTraining(Character character, String statType, int statGain) {
+    switch (statType) {
+      case 'strength':
+        return character.copyWith(strength: character.strength + statGain);
+      case 'intelligence':
+        return character.copyWith(intelligence: character.intelligence + statGain);
+      case 'speed':
+        return character.copyWith(speed: character.speed + statGain);
+      case 'defense':
+        return character.copyWith(defense: character.defense + statGain);
+      case 'willpower':
+        return character.copyWith(willpower: character.willpower + statGain);
+      case 'bukijutsu':
+        return character.copyWith(bukijutsu: character.bukijutsu + statGain);
+      case 'ninjutsu':
+        return character.copyWith(ninjutsu: character.ninjutsu + statGain);
+      case 'taijutsu':
+        return character.copyWith(taijutsu: character.taijutsu + statGain);
+      case 'genjutsu':
+        return character.copyWith(genjutsu: character.genjutsu + statGain);
+      default:
+        return character;
+    }
   }
 
   // Cancel a training session

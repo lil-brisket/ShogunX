@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class User {
   final String id;
   final String username;
@@ -245,6 +247,61 @@ class User {
       characterIds: List<String>.from(json['characterIds']),
       lastVillage: json['lastVillage'],
       lastActivity: json['lastActivity'] != null ? DateTime.parse(json['lastActivity']) : null,
+    );
+  }
+
+  // Firestore serialization methods
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'createdAt': createdAt,
+      'lastLogin': lastLogin,
+      'isActive': isActive,
+      'isVerified': isVerified,
+      'displayName': displayName,
+      'avatarUrl': avatarUrl,
+      'bio': bio,
+      'preferences': preferences,
+      'isBanned': isBanned,
+      'banReason': banReason,
+      'banExpiry': banExpiry,
+      'warningCount': warningCount,
+      'friends': friends,
+      'blockedUsers': blockedUsers,
+      'ignoredUsers': ignoredUsers,
+      'currentCharacterId': currentCharacterId,
+      'characterIds': characterIds,
+      'lastVillage': lastVillage,
+      'lastActivity': lastActivity,
+    };
+  }
+
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
+      id: map['id'],
+      username: map['username'],
+      email: map['email'],
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      lastLogin: (map['lastLogin'] as Timestamp).toDate(),
+      isActive: map['isActive'],
+      isVerified: map['isVerified'],
+      displayName: map['displayName'],
+      avatarUrl: map['avatarUrl'],
+      bio: map['bio'],
+      preferences: Map<String, dynamic>.from(map['preferences']),
+      isBanned: map['isBanned'],
+      banReason: map['banReason'],
+      banExpiry: map['banExpiry'] != null ? (map['banExpiry'] as Timestamp).toDate() : null,
+      warningCount: map['warningCount'],
+      friends: List<String>.from(map['friends']),
+      blockedUsers: List<String>.from(map['blockedUsers']),
+      ignoredUsers: List<String>.from(map['ignoredUsers']),
+      currentCharacterId: map['currentCharacterId'],
+      characterIds: List<String>.from(map['characterIds']),
+      lastVillage: map['lastVillage'],
+      lastActivity: map['lastActivity'] != null ? (map['lastActivity'] as Timestamp).toDate() : null,
     );
   }
 }

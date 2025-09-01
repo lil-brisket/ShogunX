@@ -288,8 +288,8 @@ class Character {
       'medicalExp': medicalExp,
       'avatarUrl': avatarUrl,
       'gender': gender,
-      'inventory': inventory.map((item) => item.toJson()).toList(),
-      'equippedItems': equippedItems.map((slot, item) => MapEntry(slot.name, item?.toJson())),
+      'inventory': inventory.map((item) => item.toMap()).toList(),
+      'equippedItems': equippedItems.map((slot, item) => MapEntry(slot.name, item?.toMap())),
     };
   }
 
@@ -345,6 +345,114 @@ class Character {
                 (entry) => MapEntry(
                   EquipmentSlotExtension.fromName(entry.key),
                   entry.value != null ? Item.fromJson(entry.value) : null,
+                ),
+              ),
+            )
+          : {},
+    );
+  }
+
+  // Firestore serialization methods
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userId': userId,
+      'name': name,
+      'village': village,
+      'clanId': clanId,
+      'clanRank': clanRank,
+      'ninjaRank': ninjaRank,
+      'elements': elements,
+      'bloodline': bloodline,
+      'strength': strength,
+      'intelligence': intelligence,
+      'speed': speed,
+      'defense': defense,
+      'willpower': willpower,
+      'bukijutsu': bukijutsu,
+      'ninjutsu': ninjutsu,
+      'taijutsu': taijutsu,
+      'genjutsu': genjutsu,
+      'jutsuMastery': jutsuMastery,
+      'currentHp': currentHp,
+      'currentChakra': currentChakra,
+      'currentStamina': currentStamina,
+      'experience': experience,
+      'level': level,
+      'hpRegenRate': hpRegenRate,
+      'cpRegenRate': cpRegenRate,
+      'spRegenRate': spRegenRate,
+      'ryoOnHand': ryoOnHand,
+      'ryoBanked': ryoBanked,
+      'villageLoyalty': villageLoyalty,
+      'outlawInfamy': outlawInfamy,
+      'marriedTo': marriedTo,
+      'senseiId': senseiId,
+      'studentIds': studentIds,
+      'pvpWins': pvpWins,
+      'pvpLosses': pvpLosses,
+      'pveWins': pveWins,
+      'pveLosses': pveLosses,
+      'medicalExp': medicalExp,
+      'avatarUrl': avatarUrl,
+      'gender': gender,
+      'inventory': inventory.map((item) => item.toMap()).toList(),
+      'equippedItems': equippedItems.map((slot, item) => MapEntry(slot.name, item?.toMap())),
+    };
+  }
+
+  factory Character.fromMap(Map<String, dynamic> map) {
+    return Character(
+      id: map['id'],
+      userId: map['userId'],
+      name: map['name'],
+      village: map['village'],
+      clanId: map['clanId'],
+      clanRank: map['clanRank'],
+      ninjaRank: map['ninjaRank'],
+      elements: List<String>.from(map['elements']),
+      bloodline: map['bloodline'],
+      strength: map['strength'],
+      intelligence: map['intelligence'],
+      speed: map['speed'],
+      defense: map['defense'],
+      willpower: map['willpower'],
+      bukijutsu: map['bukijutsu'],
+      ninjutsu: map['ninjutsu'],
+      taijutsu: map['taijutsu'],
+      genjutsu: map['genjutsu'],
+      jutsuMastery: Map<String, int>.from(map['jutsuMastery']),
+      currentHp: map['currentHp'],
+      currentChakra: map['currentChakra'],
+      currentStamina: map['currentStamina'],
+      experience: map['experience'],
+      level: map['level'],
+      hpRegenRate: map['hpRegenRate'] ?? 0,
+      cpRegenRate: map['cpRegenRate'] ?? 0,
+      spRegenRate: map['spRegenRate'] ?? 0,
+      ryoOnHand: map['ryoOnHand'],
+      ryoBanked: map['ryoBanked'],
+      villageLoyalty: map['villageLoyalty'],
+      outlawInfamy: map['outlawInfamy'],
+      marriedTo: map['marriedTo'],
+      senseiId: map['senseiId'],
+      studentIds: List<String>.from(map['studentIds']),
+      pvpWins: map['pvpWins'],
+      pvpLosses: map['pvpLosses'],
+      pveWins: map['pveWins'],
+      pveLosses: map['pveLosses'],
+      medicalExp: map['medicalExp'] ?? 0,
+      avatarUrl: map['avatarUrl'],
+      gender: map['gender'],
+      inventory: map['inventory'] != null 
+          ? List<Item>.from(map['inventory'].map((x) => Item.fromMap(x)))
+          : [],
+      equippedItems: map['equippedItems'] != null 
+          ? Map<EquipmentSlot, Item?>.fromEntries(
+              (map['equippedItems'] as Map<String, dynamic>).entries.map(
+                (entry) => MapEntry(
+                  EquipmentSlotExtension.fromName(entry.key),
+                  entry.value != null ? Item.fromMap(entry.value) : null,
                 ),
               ),
             )

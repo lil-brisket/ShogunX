@@ -7,6 +7,8 @@ import '../../services/banking_service.dart';
 import 'transfer_dialog.dart';
 import 'transaction_history_dialog.dart';
 
+import '../../widgets/logout_button.dart';
+
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -39,6 +41,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (currentCharacter != null) {
         final regenerationNotifier = ref.read(characterRegenerationProvider(currentCharacter.id).notifier);
         regenerationNotifier.startRegeneration(currentCharacter);
+        
+        // Load training sessions for the current character
+        ref.read(activeTrainingSessionsProvider.notifier).loadExistingSessions(currentCharacter.id, ref);
       }
     }
   }
@@ -68,19 +73,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildNoCharacterScreen() {
-    return const Scaffold(
-      backgroundColor: Color(0xFF0f3460),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0f3460),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.person_off,
               color: Colors.deepOrange,
               size: 64,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'No Character Selected',
               style: TextStyle(
                 color: Colors.white,
@@ -88,14 +93,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Create or select a character to view profile',
+            const SizedBox(height: 8),
+            const Text(
+              'Create your character to view profile',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
               ),
             ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.push('/create-character');
+              },
+              icon: const Icon(Icons.person_add),
+              label: const Text('Create Character'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
           ],
         ),
       ),
@@ -106,6 +128,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     
     return Scaffold(
       backgroundColor: const Color(0xFF0f3460),
+      appBar: AppBar(
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF16213e),
+        elevation: 0,
+        actions: [
+          LogoutButton(),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -349,6 +385,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
+
                   // Enhanced Settings Button
                   Container(
                     decoration: BoxDecoration(
@@ -367,6 +404,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  const LogoutButton(),
                 ],
               ),
             ),

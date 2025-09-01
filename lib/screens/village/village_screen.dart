@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/providers.dart';
 import '../../models/models.dart';
 import '../../services/banking_service.dart';
 import '../../services/training_service.dart';
 import '../profile/transfer_dialog.dart';
 import 'hospital_screen.dart';
+import 'combat_arena_screen.dart';
+import '../../widgets/logout_button.dart';
 
 
 class VillageScreen extends ConsumerStatefulWidget {
@@ -23,7 +26,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 8, vsync: this);
+    _tabController = TabController(length: 9, vsync: this);
     _tabController.addListener(() {
       ref.read(selectedVillageTabProvider.notifier).state = _tabController.index;
     });
@@ -102,6 +105,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                       ],
                     ),
                   ),
+                  const LogoutButton(),
                 ],
               ),
             ),
@@ -130,6 +134,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                   Tab(text: 'Dark Ops'),
                   Tab(text: 'Hospital'),
                   Tab(text: 'Training'),
+                  Tab(text: 'Arena'),
                   Tab(text: 'Shop'),
                 ],
               ),
@@ -147,6 +152,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                   _buildDarkOpsTab(),
                   _buildHospitalTab(),
                   _buildTrainingTab(),
+                  _buildCombatArenaTab(),
                   _buildShopTab(),
                 ],
               ),
@@ -617,6 +623,10 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
     );
   }
 
+  Widget _buildCombatArenaTab() {
+    return const CombatArenaScreen();
+  }
+
   Widget _buildActiveTrainingSessionsSection(List<TrainingSession> characterSessions) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,7 +789,7 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pushNamed('/login');
+              context.go('/login');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange,
@@ -1051,30 +1061,26 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
               const SizedBox(width: 16),
               if (session.isComplete) ...[
                 ElevatedButton(
-                  onPressed: () {
-                    // Complete training and update character
-                    final completedSession = trainingNotifier.completeTraining(session.id);
+                  onPressed: () async {
+                    // Complete training and update character with Firebase persistence
+                    await trainingNotifier.completeTrainingAndUpdateCharacter(session.id, ref);
+                    
+                    // Add to completed sessions
+                    final completedSession = ref.read(activeTrainingSessionsProvider.notifier)
+                        .completeTraining(session.id);
                     if (completedSession != null) {
                       completedNotifier.addCompletedSession(completedSession);
-                      
-                      // Update character stats using auth provider
-                      ref.read(authStateProvider.notifier).completeTraining(
-                        session.characterId, 
-                        session.statType, 
-                        completedSession.actualGain ?? 0, 
-                        ref
-                      );
-                      
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Training completed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession.actualGain}',
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
                     }
+                    
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Training completed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession?.actualGain ?? 0}',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -1088,30 +1094,26 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
                 ),
               ] else ...[
                 ElevatedButton(
-                  onPressed: () {
-                    // Redeem training early
-                    final completedSession = trainingNotifier.completeTraining(session.id);
+                  onPressed: () async {
+                    // Redeem training early with Firebase persistence
+                    await trainingNotifier.completeTrainingAndUpdateCharacter(session.id, ref);
+                    
+                    // Add to completed sessions
+                    final completedSession = ref.read(activeTrainingSessionsProvider.notifier)
+                        .completeTraining(session.id);
                     if (completedSession != null) {
                       completedNotifier.addCompletedSession(completedSession);
-                      
-                      // Update character stats using auth provider
-                      ref.read(authStateProvider.notifier).completeTraining(
-                        session.characterId, 
-                        session.statType, 
-                        completedSession.actualGain ?? 0, 
-                        ref
-                      );
-                      
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Training redeemed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession.actualGain}',
-                          ),
-                          backgroundColor: Colors.deepOrange,
-                        ),
-                      );
                     }
+                    
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Training redeemed! ${TrainingService.getStatDisplayName(session.statType)} +${completedSession?.actualGain ?? 0}',
+                        ),
+                        backgroundColor: Colors.deepOrange,
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange,
@@ -1163,8 +1165,8 @@ class _VillageScreenState extends ConsumerState<VillageScreen> with TickerProvid
         ],
       ),
       child: InkWell(
-        onTap: canTrain && !isCurrentlyTraining ? () {
-          trainingNotifier.startTraining(character, statType);
+        onTap: canTrain && !isCurrentlyTraining ? () async {
+          await trainingNotifier.startTraining(character, statType, ref);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(

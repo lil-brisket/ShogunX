@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/providers.dart';
-
 import '../../models/models.dart';
+import '../../widgets/logout_button.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -74,13 +75,15 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 IconButton(
                   onPressed: () {
-                    ref.read(authStateProvider.notifier).logout(ref);
+                    context.go('/firebase-test');
                   },
                   icon: const Icon(
-                    Icons.logout,
-                    color: Colors.deepOrange,
+                    Icons.cloud,
+                    color: Colors.blue,
                   ),
+                  tooltip: 'Firebase Test',
                 ),
+                const LogoutButton(),
               ],
             ),
           ),

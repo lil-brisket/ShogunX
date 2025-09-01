@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../services/services.dart';
+import '../../widgets/logout_button.dart';
 
 class HospitalScreen extends ConsumerStatefulWidget {
   const HospitalScreen({super.key});
@@ -39,6 +40,9 @@ class _HospitalScreenState extends ConsumerState<HospitalScreen> {
         title: const Text('Hospital'),
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.onSurface,
+        actions: const [
+          LogoutButton(),
+        ],
       ),
       body: Column(
         children: [

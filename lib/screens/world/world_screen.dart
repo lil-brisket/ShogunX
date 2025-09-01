@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../widgets/logout_button.dart';
 
 
 
@@ -56,6 +57,7 @@ class WorldScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const LogoutButton(),
                 ],
               ),
             ),

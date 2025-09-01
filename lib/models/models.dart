@@ -10,3 +10,6 @@ export 'game_update.dart';
 export 'training_session.dart';
 export 'medical_rank.dart';
 export 'hospital_patient.dart';
+export 'village.dart';
+export 'battle.dart';
+export 'hospital_record.dart';

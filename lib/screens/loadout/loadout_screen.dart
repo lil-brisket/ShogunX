@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
+import '../../widgets/logout_button.dart';
 
 class LoadoutScreen extends ConsumerStatefulWidget {
   const LoadoutScreen({super.key});
@@ -81,6 +82,7 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
                       ],
                     ),
                   ),
+                  const LogoutButton(),
                 ],
               ),
             ),
@@ -639,15 +641,15 @@ class _LoadoutScreenState extends ConsumerState<LoadoutScreen> with TickerProvid
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isEquipped 
-            ? Colors.green.withValues(alpha: 0.1)
+            ? Colors.green.withValues(alpha:0.1)
             : const Color(0xFF1a1a2e),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isEquipped 
-              ? Colors.green.withValues(alpha: 0.8)
-              : item.rarityColor.withValues(alpha: 0.3),
-            width: isEquipped ? 2 : 1,
-          ),
+                      border: Border.all(
+              color: isEquipped 
+                ? Colors.green.withValues(alpha:0.8)
+                : item.rarityColor.withValues(alpha:0.3),
+              width: isEquipped ? 2 : 1,
+            ),
         ),
         child: Row(
           children: [

@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import 'training_provider.dart';
+import 'game_provider.dart';
 
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
+final authServiceProvider = Provider<FirebaseAuthService>((ref) {
+  return FirebaseAuthService();
 });
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
@@ -50,7 +52,9 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthService _authService;
+  final FirebaseAuthService _authService;
+  
+  FirebaseAuthService get authService => _authService;
 
   AuthNotifier(this._authService) : super(AuthState());
 
@@ -73,6 +77,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         ref.read(gameStateProvider.notifier).setUserCharacters(characters);
         if (characters.isNotEmpty) {
           ref.read(gameStateProvider.notifier).selectCharacter(characters.first);
+          print('✅ Auto-selected character: ${characters.first.name}');
+        } else {
+          print('⚠️ No characters found for user - they will need to create one');
         }
         
         return true;
@@ -111,6 +118,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         ref.read(gameStateProvider.notifier).setUserCharacters(characters);
         if (characters.isNotEmpty) {
           ref.read(gameStateProvider.notifier).selectCharacter(characters.first);
+          print('✅ Auto-selected character: ${characters.first.name}');
+        } else {
+          print('⚠️ No characters found for user - they will need to create one');
         }
         
         return true;
@@ -131,20 +141,42 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout(WidgetRef ref) async {
-    state = state.copyWith(isLoading: true);
+    print('🔄 Starting logout process...');
     
     try {
+      print('🧹 Clearing training sessions...');
+      // Clear training sessions before logout
+      ref.read(activeTrainingSessionsProvider.notifier).clearAllSessions();
+      
+      print('🔐 Calling Firebase logout...');
       await _authService.logout();
+      
+      print('🎮 Clearing game state...');
+      // Clear game state on logout
+      ref.read(gameStateProvider.notifier).clearSelectedCharacter();
+      ref.read(gameStateProvider.notifier).setUserCharacters([]);
+      
+      // Reset all tab selections to home
+      ref.read(selectedTabProvider.notifier).state = 0;
+      ref.read(selectedVillageTabProvider.notifier).state = 0;
+      ref.read(selectedLoadoutTabProvider.notifier).state = 0;
+      
+      // Clear shop filters
+      ref.read(shopProviderProvider.notifier).clearFilters();
+      
+      print('📱 Updating auth state...');
+      // Update auth state last to trigger navigation
       state = state.copyWith(
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        error: null,
       );
       
-      // Clear game state on logout
-      ref.read(gameStateProvider.notifier).clearSelectedCharacter();
-      ref.read(gameStateProvider.notifier).setUserCharacters([]);
+      print('✅ Logout successful - user state cleared');
     } catch (e) {
+      print('❌ Logout error: $e');
+      // Don't use ref in catch block as widget might be disposed
       state = state.copyWith(
         isLoading: false,
         error: 'Logout failed: ${e.toString()}',
@@ -172,18 +204,36 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<List<Character>> loadUserCharacters() async {
     try {
       final characters = await _authService.getUserCharacters();
+      print('✅ Loaded ${characters.length} characters for user');
       return characters;
     } catch (e) {
+      print('❌ Failed to load user characters: $e');
+      // Return empty list if Firebase is not available
       return [];
     }
   }
 
   void selectCharacter(Character character, WidgetRef ref) {
     ref.read(gameStateProvider.notifier).selectCharacter(character);
+    
+    // Load training sessions for the selected character
+    ref.read(activeTrainingSessionsProvider.notifier).loadExistingSessions(character.id, ref);
   }
 
-  void updateCharacter(Character character, WidgetRef ref) {
-    ref.read(gameStateProvider.notifier).updateCharacter(character);
+  Future<void> loadTrainingSessionsForCharacter(String characterId, WidgetRef ref) async {
+    await ref.read(activeTrainingSessionsProvider.notifier).loadExistingSessions(characterId, ref);
+  }
+
+  Future<void> updateCharacter(Character character, WidgetRef ref) async {
+    try {
+      // Update in Firebase
+      await _authService.updateCharacter(character);
+      // Update in local state
+      ref.read(gameStateProvider.notifier).updateCharacter(character);
+      print('✅ Character updated in both Firebase and local state');
+    } catch (e) {
+      print('❌ Failed to update character: $e');
+    }
   }
 
   Character? getCurrentCharacter(WidgetRef ref) {
@@ -197,15 +247,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> refreshUserCharacters(WidgetRef ref) async {
     final characters = await loadUserCharacters();
     ref.read(gameStateProvider.notifier).setUserCharacters(characters);
+    
+    // If no characters exist, try to create a default one
+    if (characters.isEmpty && state.user != null) {
+      print('🔄 No characters found, attempting to create default character...');
+      try {
+        final defaultCharacter = _createDefaultCharacter(
+          state.user!.id, 
+          state.user!.username, 
+          state.user!.lastVillage ?? 'Konoha'
+        );
+        await createCharacter(defaultCharacter, ref);
+        print('✅ Default character created successfully');
+      } catch (e) {
+        print('❌ Failed to create default character: $e');
+      }
+    }
   }
 
   Future<void> createCharacter(Character character, WidgetRef ref) async {
     try {
+      print('🎮 Creating character: ${character.name}');
+      
+      // Check if user already has a character
+      final existingCharacters = ref.read(gameStateProvider.notifier).state.userCharacters;
+      if (existingCharacters.isNotEmpty) {
+        throw Exception('User already has a character. Only one character per account is allowed.');
+      }
+      
+      // Save character to Firebase first
+      await _authService.saveCharacter(character);
+      
+      // Also save to game service for local storage
       await GameService().createCharacter(character);
+      
+      // Refresh user characters and select the new one
       await refreshUserCharacters(ref);
       ref.read(gameStateProvider.notifier).selectCharacter(character);
+      
+      print('✅ Character created successfully: ${character.name}');
     } catch (e) {
-      // Handle error
+      print('❌ Failed to create character: $e');
+      rethrow;
     }
   }
 
@@ -235,6 +318,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void updateCharacterStat(String characterId, String statType, int newValue, WidgetRef ref) {
     ref.read(gameStateProvider.notifier).updateCharacterStats(characterId, {statType: newValue});
+  }
+
+  Character _createDefaultCharacter(String userId, String username, String village) {
+    return Character(
+      id: 'char_${userId}_${DateTime.now().millisecondsSinceEpoch}',
+      userId: userId,
+      name: username,
+      village: village,
+      clanId: null,
+      clanRank: null,
+      ninjaRank: 'Genin',
+      elements: _getRandomElements(),
+      bloodline: null,
+      strength: 1000,
+      intelligence: 1000,
+      speed: 1000,
+      defense: 1000,
+      willpower: 1000,
+      bukijutsu: 1000,
+      ninjutsu: 1000,
+      taijutsu: 1000,
+      genjutsu: 0,
+      jutsuMastery: {},
+      currentHp: 40000,
+      currentChakra: 30000,
+      currentStamina: 30000,
+      experience: 0,
+      level: 1,
+      hpRegenRate: 100,
+      cpRegenRate: 100,
+      spRegenRate: 100,
+      ryoOnHand: 1000,
+      ryoBanked: 0,
+      villageLoyalty: 100,
+      outlawInfamy: 0,
+      marriedTo: null,
+      senseiId: null,
+      studentIds: [],
+      pvpWins: 0,
+      pvpLosses: 0,
+      pveWins: 0,
+      pveLosses: 0,
+      medicalExp: 0,
+      avatarUrl: null,
+      gender: 'Unknown',
+      inventory: [],
+      equippedItems: {},
+    );
+  }
+
+  List<String> _getRandomElements() {
+    final allElements = ['Fire', 'Water', 'Earth', 'Wind', 'Lightning'];
+    final random = DateTime.now().millisecondsSinceEpoch % allElements.length;
+    return [allElements[random]];
   }
 
   void completeTraining(String characterId, String statType, int statGain, WidgetRef ref) {

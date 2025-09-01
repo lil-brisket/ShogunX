@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/providers.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/profile/settings_screen.dart';
+import 'screens/profile/character_creation_screen.dart';
+import 'screens/firebase_test_screen.dart';
 import 'services/theme_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(
     const ProviderScope(
       child: NinjaWorldMMOApp(),
@@ -45,9 +56,17 @@ class NinjaWorldMMOApp extends ConsumerWidget {
           path: '/profile/settings',
           builder: (context, state) => const SettingsScreen(),
         ),
+        GoRoute(
+          path: '/create-character',
+          builder: (context, state) => const CharacterCreationScreen(),
+        ),
+        GoRoute(
+          path: '/firebase-test',
+          builder: (context, state) => const FirebaseTestScreen(),
+        ),
       ],
       redirect: (context, state) {
-        final authState = ref.read(authStateProvider);
+        final authState = ref.watch(authStateProvider);
         final isAuthenticated = authState.isAuthenticated;
         final isOnAuthRoute = state.matchedLocation == '/login' || 
                              state.matchedLocation == '/register';

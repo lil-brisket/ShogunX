@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "781685618847",
+    "firebase_url": "https://ninja-world-mmo-default-rtdb.firebaseio.com",
+    "project_id": "ninja-world-mmo",
+    "storage_bucket": "ninja-world-mmo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:781685618847:android:91d0dfaa1123c7ab7e4aaa",
+        "android_client_info": {
+          "package_name": "com.ninjaworld.ninja_world_mmo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZTrVrqMfIsnOb3zAL22Fx0OQJDHueLGQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

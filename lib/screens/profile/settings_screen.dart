@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../services/services.dart';
 import 'avatar_change_dialog.dart';
 
+
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -63,17 +64,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         elevation: 0,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.person_off,
               color: Colors.deepOrange,
               size: 64,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'No Character Selected',
               style: TextStyle(
                 color: Colors.white,
@@ -81,14 +82,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Create or select a character to access settings',
+            const SizedBox(height: 8),
+            const Text(
+              'Create your character to access settings',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
               ),
             ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.push('/create-character');
+              },
+              icon: const Icon(Icons.person_add),
+              label: const Text('Create Character'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
           ],
         ),
       ),
@@ -112,6 +130,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back, color: Colors.deepOrange),
         ),
+        actions: [],
         elevation: 0,
       ),
       body: SafeArea(
@@ -220,6 +239,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     'Set a custom display name',
                     Icons.badge,
                     () => _showDisplayNameDialog(character),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Account Actions
+              _buildSettingsSection(
+                'Account Actions',
+                Icons.account_circle,
+                [
+                  _buildSettingTile(
+                    'Sign Out',
+                    'Sign out of your account and return to login',
+                    Icons.logout,
+                    () => _showLogoutDialog(),
                   ),
                 ],
               ),
@@ -1143,6 +1177,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return number.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match match) => '${match[1]},',
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF16213e),
+        title: const Text(
+          'Sign Out',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Are you sure you want to sign out? You will be returned to the login screen.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ref.read(authStateProvider.notifier).logout(ref);
+            },
+            child: const Text('Sign Out', style: TextStyle(color: Colors.deepOrange)),
+          ),
+        ],
+      ),
     );
   }
 }

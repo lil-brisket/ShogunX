@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TrainingSession {
   final String id;
   final String characterId;
@@ -146,6 +148,35 @@ class TrainingSession {
       isActive: json['isActive'] ?? true,
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
       actualGain: json['actualGain'],
+    );
+  }
+
+  // Firestore serialization methods
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'characterId': characterId,
+      'statType': statType,
+      'startTime': startTime,
+      'currentStatValue': currentStatValue,
+      'maxStat': maxStat,
+      'isActive': isActive,
+      'endTime': endTime,
+      'actualGain': actualGain,
+    };
+  }
+
+  factory TrainingSession.fromMap(Map<String, dynamic> map) {
+    return TrainingSession(
+      id: map['id'],
+      characterId: map['characterId'],
+      statType: map['statType'],
+      startTime: (map['startTime'] as Timestamp).toDate(),
+      currentStatValue: map['currentStatValue'],
+      maxStat: map['maxStat'],
+      isActive: map['isActive'] ?? true,
+      endTime: map['endTime'] != null ? (map['endTime'] as Timestamp).toDate() : null,
+      actualGain: map['actualGain'],
     );
   }
 }

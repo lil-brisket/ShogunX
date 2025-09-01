@@ -287,4 +287,41 @@ class Item {
       rarity: json['rarity'],
     );
   }
+
+  // Firestore serialization method (same as toJson for Item model)
+  Map<String, dynamic> toMap() {
+    return toJson();
+  }
+
+  factory Item.fromMap(Map<String, dynamic> map) {
+    return Item(
+      id: map['id'],
+      name: map['name'],
+      description: map['description'],
+      type: ItemType.values.firstWhere((t) => t.name == map['type']),
+      equipmentSlot: map['equipmentSlot'] != null 
+          ? EquipmentSlot.values.firstWhere((s) => s.name == map['equipmentSlot'])
+          : null,
+      statBonuses: Map<String, int>.from(map['statBonuses']),
+      statMultipliers: Map<String, double>.from(map['statMultipliers']),
+      specialEffects: List<String>.from(map['specialEffects']),
+      durability: map['durability'],
+      maxDurability: map['maxDurability'],
+      isRepairable: map['isRepairable'],
+      isTradeable: map['isTradeable'],
+      isDroppable: map['isDroppable'],
+      buyPrice: map['buyPrice'],
+      sellPrice: map['sellPrice'],
+      shopCategory: map['shopCategory'],
+      isAvailableInShop: map['isAvailableInShop'],
+      requiredLevel: map['requiredLevel'],
+      statRequirements: Map<String, int>.from(map['statRequirements']),
+      requiredElements: List<String>.from(map['requiredElements']),
+      requiredBloodline: map['requiredBloodline'],
+      iconPath: map['iconPath'],
+      tags: List<String>.from(map['tags']),
+      isActive: map['isActive'],
+      rarity: map['rarity'],
+    );
+  }
 }
